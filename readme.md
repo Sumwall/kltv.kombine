@@ -271,6 +271,11 @@ The order is the following:
 
 The function will return the exitcode as result of the child script execution. Quite simple right?
 
+> Exit code compatibility note:
+> - Script aborts/internal failures are normalized to exit code `1` (generic failure).
+> - Explicit action return values are preserved as-is (for example, `return 7` exits with `7`).
+> - Consumers should check for failure using `!= 0` instead of `== -1`.
+
 But maybe you need to share information between your parent and your child scripts (maybe some global definitions, paths or whatever).
 There are multiple methods:
 

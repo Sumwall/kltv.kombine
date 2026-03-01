@@ -74,7 +74,7 @@ namespace Kltv.Kombine {
 				// This is a fatal error, we can't continue without the cache folder
 				Msg.PrintErrorMod("Failed to fetch/Create cache folder: "+ ex.Message,".cache");
 				Msg.Deinitialize();
-				Environment.Exit(-1);
+				Environment.Exit(Constants.ExitCodeFailure);
 			}
 		}
 
@@ -209,5 +209,4 @@ namespace Kltv.Kombine {
 
 	}
 }
-
 
