@@ -79,7 +79,7 @@ namespace Kltv.Kombine {
 			if (Config.Action == "kconfig") {
 				Msg.PrintErrorMod("Not yet implemented", ".main");
 				Msg.Deinitialize();
-				return Constants.ExitCodeSuccess;
+				return Constants.ExitCodeFailure;
 			}
 
 			// Future use: "kupdate" to update to latest version automatically
@@ -206,7 +206,6 @@ namespace Kltv.Kombine {
 
 	}
 }
-
 
 
 
