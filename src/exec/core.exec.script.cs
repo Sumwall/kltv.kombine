@@ -282,7 +282,7 @@ string ParentScriptFolder { get { return Folders.ParentScriptFolder; } }
 					return code;
 				}
 				Msg.PrintWarningMod("Script executed but the returned code was wrong. Review your action.", ".exec.script",Msg.LogLevels.Normal);
-				return 0;
+				return Constants.ExitCodeFailure;
 			} catch (Exception ex) {
 				//
 				// Here we catch if the script execution failed (could not be invoked) or the script itself raised an exception.

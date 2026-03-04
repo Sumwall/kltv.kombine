@@ -72,9 +72,9 @@ namespace Kltv.Kombine {
 				return Constants.ExitCodeSuccess;
 			}
 			if (Config.Action == "kcache") {
-				Cache.Action(Config.ActionParameters);
+				int cacheResult = Cache.Action(Config.ActionParameters);
 				Msg.Deinitialize();
-				return Constants.ExitCodeSuccess;
+				return cacheResult;
 			}
 			if (Config.Action == "kconfig") {
 				Msg.PrintErrorMod("Not yet implemented", ".main");
@@ -206,7 +206,6 @@ namespace Kltv.Kombine {
 
 	}
 }
-
 
 
 

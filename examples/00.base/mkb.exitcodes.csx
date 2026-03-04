@@ -32,6 +32,7 @@ int test(string[] args){
 	string scriptReturn = tempFolder + "/ret7.csx";
 	string scriptAbort = tempFolder + "/abort.csx";
 	string scriptThrow = tempFolder + "/throw.csx";
+	string scriptVoidReturn = tempFolder + "/voidreturn.csx";
 	string scriptNoAction = tempFolder + "/noaction.csx";
 
 	Files.WriteTextFile(scriptPass,
@@ -42,6 +43,8 @@ int test(string[] args){
 		"int abort(string[] args){ Msg.PrintAndAbort(\"forced abort\"); return 0; }");
 	Files.WriteTextFile(scriptThrow,
 		"int thrower(string[] args){ throw new Exception(\"forced throw\"); }");
+	Files.WriteTextFile(scriptVoidReturn,
+		"void voidret(string[] args){ Msg.Print(\"void return\"); }");
 	Files.WriteTextFile(scriptNoAction,
 		"int someaction(string[] args){ return 0; }");
 
@@ -49,7 +52,11 @@ int test(string[] args){
 	ExpectExitCode("explicit return value is preserved", Exec(mkbBinary, new string[] { "-kfile:" + scriptReturn, "ret7" }, true), 7);
 	ExpectExitCode("PrintAndAbort normalizes to generic failure", Exec(mkbBinary, new string[] { "-kfile:" + scriptAbort, "abort" }, true), ExitCodeFailure);
 	ExpectExitCode("unhandled script exception normalizes to generic failure", Exec(mkbBinary, new string[] { "-kfile:" + scriptThrow, "thrower" }, true), ExitCodeFailure);
+	ExpectExitCode("invalid action return type normalizes to generic failure", Exec(mkbBinary, new string[] { "-kfile:" + scriptVoidReturn, "voidret" }, true), ExitCodeFailure);
 	ExpectExitCode("kconfig returns failure while unimplemented", Exec(mkbBinary, "kconfig", true), ExitCodeFailure);
+	ExpectExitCode("kcache help returns success", Exec(mkbBinary, new string[] { "kcache", "help" }, true), 0);
+	ExpectExitCode("kcache without subcommand returns failure", Exec(mkbBinary, "kcache", true), ExitCodeFailure);
+	ExpectExitCode("kcache unknown subcommand returns failure", Exec(mkbBinary, new string[] { "kcache", "invalid" }, true), ExitCodeFailure);
 	ExpectExitCode("no action defaults to help success", Exec(mkbBinary, new string[] { "-kfile:" + scriptNoAction }, true), 0);
 	ExpectExitCode("unknown action returns failure", Exec(mkbBinary, new string[] { "-kfile:" + scriptNoAction, "doesnotexist" }, true), ExitCodeFailure);
 	ExpectExitCode("missing script file returns failure", Exec(mkbBinary, new string[] { "-kfile:" + tempFolder + "/missing.csx", "any" }, true), ExitCodeFailure);
