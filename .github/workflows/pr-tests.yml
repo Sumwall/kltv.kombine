@@ -9,6 +9,9 @@ on:
       - synchronize
       - reopened
       - ready_for_review
+  push:
+    branches-ignore:
+      - main
 
 permissions:
   contents: read
