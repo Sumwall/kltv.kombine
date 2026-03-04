@@ -64,22 +64,22 @@ namespace Kltv.Kombine {
 			if (Config.Action == "khelp") {
 				Config.ShowHelp();
 				Msg.Deinitialize();
-				return 0;
+				return Constants.ExitCodeSuccess;
 			}
 			if (Config.Action == "kversion") {
 				Config.ShowBanner();
 				Msg.Deinitialize();
-				return 0;
+				return Constants.ExitCodeSuccess;
 			}
 			if (Config.Action == "kcache") {
 				Cache.Action(Config.ActionParameters);
 				Msg.Deinitialize();
-				return 0;
+				return Constants.ExitCodeSuccess;
 			}
 			if (Config.Action == "kconfig") {
 				Msg.PrintErrorMod("Not yet implemented", ".main");
 				Msg.Deinitialize();
-				return 0;
+				return Constants.ExitCodeSuccess;
 			}
 
 			// Future use: "kupdate" to update to latest version automatically
@@ -151,7 +151,7 @@ namespace Kltv.Kombine {
 				Msg.BeginIndent();
 			// Execute the script. 
 			//
-			int result = 0;
+			int result = Constants.ExitCodeSuccess;
 			Msg.PrintMod("Script to execute: " + script + " with action: " + action, ".main", Msg.LogLevels.Debug);
 			try {
 				result = main.Execute(action, args);
@@ -206,7 +206,6 @@ namespace Kltv.Kombine {
 
 	}
 }
-
 
 
 
