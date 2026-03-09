@@ -1,0 +1,112 @@
+name: Main Test and Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Test and publish release
+    runs-on: windows-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build mkb (Debug)
+        run: dotnet build src/kombine.csproj -c Debug -r win-x64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Run full mkb test suite
+        run: .\out\bin\win-x64\debug\mkb.exe -kfile:kombine.csx test
+
+      - name: Build self-contained single-file release artifact
+        run: dotnet publish src/kombine.csproj -c Release -r win-x64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json -o out/pub/win-x64/release-single-exe
+
+      - name: Verify single release artifact exists
+        run: |
+          if (!(Test-Path "out/pub/win-x64/release-single-exe/mkb.exe")) {
+            throw "Expected release artifact not found: out/pub/win-x64/release-single-exe/mkb.exe"
+          }
+
+      - name: Compute release tag from latest Release-x.x(.YYYYMMDD) + UTC date
+        id: tag
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN || 'local-test-token' }}
+          script: |
+            const isLocalReleaseTest = process.env.ACT === "true" || process.env.LOCAL_RELEASE_TEST === "true";
+
+            async function resolveLatestTag() {
+              if (isLocalReleaseTest) {
+                const { execSync } = require("child_process");
+                const output = execSync('git tag --list "Release-*" --sort=-creatordate', { encoding: "utf8" }).trim();
+                const tags = output ? output.split(/\r?\n/).filter(Boolean) : [];
+                if (tags.length === 0) {
+                  throw new Error("No local tags matching Release-* were found.");
+                }
+                core.info(`Local release test mode enabled (ACT/LOCAL_RELEASE_TEST). Using latest local tag: ${tags[0]}`);
+                return tags[0];
+              }
+
+              const latestRelease = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+              if (!latestRelease.data.tag_name) {
+                throw new Error("Latest release has no tag_name.");
+              }
+              return latestRelease.data.tag_name;
+            }
+
+            try {
+              const latestTag = await resolveLatestTag();
+
+              const match = latestTag.match(/^Release-(\d+)\.(\d+)(?:\.(\d{8}))?$/);
+              if (!match) {
+                throw new Error(`Latest tag "${latestTag}" does not match expected format Release-x.x or Release-x.x.YYYYMMDD.`);
+              }
+
+              const baseTag = `Release-${match[1]}.${match[2]}`;
+              const utcDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+              const releaseTag = `${baseTag}.${utcDate}`;
+
+              core.info(`Latest tag: ${latestTag}`);
+              core.info(`Base tag: ${baseTag}`);
+              core.info(`Release tag: ${releaseTag}`);
+              core.setOutput("latest_tag", latestTag);
+              core.setOutput("base_tag", baseTag);
+              core.setOutput("release_tag", releaseTag);
+            } catch (error) {
+              core.setFailed(`Unable to resolve latest release tag. Ensure at least one release exists and uses Release-x.x(.YYYYMMDD). ${error.message}`);
+            }
+
+      - name: Publish or update release
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.LOCAL_RELEASE_TEST != 'true' && env.ACT != 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          name: ${{ steps.tag.outputs.release_tag }}
+          files: out/pub/win-x64/release-single-exe/mkb.exe
+          draft: false
+          prerelease: false
+          make_latest: true
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
