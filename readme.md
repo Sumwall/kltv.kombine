@@ -271,6 +271,15 @@ The order is the following:
 
 The function will return the exitcode as result of the child script execution. Quite simple right?
 
+> Exit code compatibility note:
+> - Script aborts/internal failures are normalized to exit code `1` (generic failure).
+> - Explicit action return values are preserved as-is (for example, `return 7` exits with `7`).
+> - Actions that do not return `int` are treated as failures and exit with `1`.
+> - Built-in `kconfig` now exits with `1` while unimplemented (it previously exited with `0`).
+> - Built-in `kcache` exits with `1` for missing/unknown subcommands and `0` for successful operations.
+> - User cancellation (Ctrl+C) exits with `130`.
+> - Consumers should check for failure using `!= 0` instead of `== -1`.
+
 But maybe you need to share information between your parent and your child scripts (maybe some global definitions, paths or whatever).
 There are multiple methods:
 
