@@ -28,6 +28,7 @@ int test(string[] args){
 	Msg.Print("Testing: Base functions");
 	Kombine("00.base/mkb.version.csx","test",args);
 	Kombine("00.base/mkb.admin.csx","test",args);
+	Kombine("00.base/mkb.exitcodes.csx","test",args);
 	Msg.Print("----------------------------------------------------------");
 	Msg.Print("");
 	Msg.Print("Testing: Simple script (two actions)");
