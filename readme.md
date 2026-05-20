@@ -5,6 +5,7 @@
 - [Feature state](doc/features.md)
 - [Download and Installation](#download-and-installation)
 - [Usage](#usage)
+   * [Exit codes](#exit-codes)
 - [Script structure and execution](#script-structure-and-execution)
    * [Enable intellisense in your editor](#enable-intellisense-in-your-editor)
    * [Debugging your scripts](#debugging-your-scripts)
@@ -16,6 +17,7 @@
 - [Extending Kombine](#extending-kombine)
 - [Requirements to create Kombine](doc/reasons.md)
 - [Building the Kombine tool](doc/building.md)
+- [Creating a Release](#creating-a-release)
 - [API reference](doc/api.md)
 - [TODO List](doc/todo.md)
 - [License](#license)
@@ -51,18 +53,35 @@ It is single file / self contained so you don't need Dotnet to execute it. Kombi
 
 ## Download and Installation
 
-You have all the files in the [releases](https://github.com/kollective-networks/kltv.kombine/releases) page. 
+All releases and downloads are available on the [releases page](https://github.com/kollective-networks/kltv.kombine/releases).
 
-Just grab the file for your platform ( [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.win.zip), [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.lnx.tar.gz) or [Mac OSX](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.osx.tar.gz) ) a place it on the path. Nothing else.
+### Single-file executables (recommended)
+
+These are self-contained and ready to use. Extract and place on your PATH:
+
+- [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.win.zip)
+- [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.lnx.tar.gz)
+- [macOS](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.osx.tar.gz)
 
 That's all. No other dependencies. No other languages. You're done. That's the way we [wanted](doc/reasons.md).
 
-If you plan to use intellisense to edit your scripts maybe you need the reference assembly to be used as input for intellisense.
-You can take it from [here](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.ref.zip). In that case refer to your IDE about requirements to support the language (C#) and how to activate / use the intellisense.
+### Optional: Reference assembly for intellisense
 
-If you plan to debug your build scripts (yes, they can be debugged) you may require a Dotnet debugger. Refer to your IDE/environement about requirements to support debug the language (C#) and how to use it. Since there is a bug in the Dotnet debugger(s) that may impact you (regarding to debug a single file executable) we provide the unpacked versions as well so, if required, you can grab them here for [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.win.zip), [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.lnx.tar.gz) and [Mac OSX](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.osx.tar.gz)
+If your IDE supports C# intellisense (VS Code, Visual Studio, Rider, etc.), download the reference assembly:
 
-Take a look into the "examples.debug" project as an example about how to debug inside Visual Studio (is a makefile project that just launch the Kombine tool to execute the example scripts with the managed debugger attached)
+- [kombine.ref.zip](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.ref.zip)
+
+Place it alongside your script and add `#r "mkb.dll"` at the top. Refer to your IDE documentation for C# intellisense setup.
+
+### Optional: Debug/unpacked versions
+
+If you need to debug build scripts with a .NET debugger, download the unpacked versions (these work around a debugger limitation with single-file executables):
+
+- [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.win.zip)
+- [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.lnx.tar.gz)
+- [macOS](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.osx.tar.gz)
+
+See [Debugging your scripts](#debugging-your-scripts) for setup instructions.
 
 ## Usage
 
@@ -123,6 +142,22 @@ Check further about cache and config operations.
 The default action is "khelp"
 
 Action parameters will be sent to the Action you execute it. Everything behind an action is consider as an action parameter.
+
+### Exit codes
+
+Kombine follows standard Unix exit code conventions:
+
+- `0` — Success
+- `1` — Generic failure (script aborts, internal errors, unimplemented built-ins)
+- `130` — User cancellation (Ctrl+C)
+- Other values — Explicit return values from action functions are preserved (e.g., `return 7` exits with code `7`)
+
+Compatibility notes:
+
+- Built-in `kconfig` exits with `1` when unimplemented
+- Built-in `kcache` exits with `1` for missing/unknown subcommands, `0` for success
+- Actions that don't return `int` are treated as failures (exit code `1`)
+- Always check exit codes with `!= 0` for failure, not `== -1`
 
 ## Script structure and execution
 
@@ -269,16 +304,7 @@ The order is the following:
 4. Backward paths
 5. Kombine tool directory 
 
-The function will return the exitcode as result of the child script execution. Quite simple right?
-
-> Exit code compatibility note:
-> - Script aborts/internal failures are normalized to exit code `1` (generic failure).
-> - Explicit action return values are preserved as-is (for example, `return 7` exits with `7`).
-> - Actions that do not return `int` are treated as failures and exit with `1`.
-> - Built-in `kconfig` now exits with `1` while unimplemented (it previously exited with `0`).
-> - Built-in `kcache` exits with `1` for missing/unknown subcommands and `0` for successful operations.
-> - User cancellation (Ctrl+C) exits with `130`.
-> - Consumers should check for failure using `!= 0` instead of `== -1`.
+The function will return the exit code as result of the child script execution. Quite simple right? See [Exit codes](#exit-codes) for details on return value semantics.
 
 But maybe you need to share information between your parent and your child scripts (maybe some global definitions, paths or whatever).
 There are multiple methods:
@@ -442,6 +468,17 @@ They are not superb and even not completed with all the possibilities but ready 
 If you create some class extension and you think it could be useful for others, please, share it. 
 Everything is welcome.
 
+## Creating a Release
+
+Releases are triggered by pushing a Git tag matching the pattern `v*` (e.g., `v1.4.20260520`). GitHub Actions automatically builds for all platforms and creates a release with all artifacts.
+
+```bash
+git tag v1.4.20260520
+git push origin v1.4.20260520
+```
+
+The CI workflow runs tests, cross-compiles for Windows/Linux/macOS, packages both debug and release builds, and publishes to GitHub releases. See [doc/building.md](doc/building.md) for detailed instructions.
+
 ## License
 
 MIT License
@@ -465,7 +502,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-## Test branch
-
-Just for testing purposes

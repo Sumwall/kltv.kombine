@@ -11,12 +11,12 @@ Anyway Kombine is used in the Kombine building process partially, see [generatin
 
 ## Requisites and recomended environment
 
-In order to build Kombine then you need Dotnet SDK, to be more specific, Dotnet 10. 
-You can gran your copy from [here at Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
+In order to build Kombine then you need Dotnet SDK 10.0 or later.
+You can get your copy from [here at Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
 
 Anything else is required since Kombine is only pure C# managed code.
 
-Once you have cloned this repository and you have Dotnet 8 installed, build Kombine is easy as:
+Once you have cloned this repository and you have Dotnet 10 installed, build Kombine is easy as:
 ```dotnet build``` or ```dotnet build -r yourplatform here```
 We provided a *"directory.build.props"* file so everything from build is stored into an "out" folder with the following structure:
 
@@ -36,24 +36,60 @@ Also you can use the provided Kombine script to build the project, just execute 
 
 Usage of Visual Studio (a solution is provided) is encouraged if you want to modify the code, but you can use any other IDE or just a text editor and command line.
 
+## macOS Setup (Apple Silicon & Intel)
+
+If you're building on macOS and want to use C/C++ build extensions (clang, bin2obj), install the LLVM toolchain:
+
+```bash
+brew install llvm lld
+```
+
+Then add LLVM to your PATH:
+
+```bash
+export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
+```
+
+You can make this permanent by adding it to your shell profile (`.zshrc` or `.bash_profile`).
+
+**Platform Notes:**
+
+- The `lld` linker is required for C/C++ linking via the clang extension
+- The `bin2obj` extension generates Mach-O object files on macOS and COFF on Windows/Linux — automatic format detection works transparently
+- For best compatibility, use the native clang toolchain when available (`brew install llvm`)
 
 ## Generating the packages
 
-For this case we use Kombine. There is one Kombine script in the root of the repository which supports two actions:
+For this case we use Kombine. There is one Kombine script in the root of the repository which supports actions:
 
-- "build": Just a wrapper on top of dotnet build
-- "publish": This one builds in release for the three target OS (Windows, Linux and Mac OSX) the two flavors (unpacked and single file). It generates the diferent packages (.tar.gz / zip) including the reference assembly as well.
-- "test": Executes all the provided examples as a test
+- `build` — Just a wrapper on top of `dotnet build`
+- `publish` — Builds in release for the three target OS (Windows, Linux and Mac OSX) the two flavors (unpacked and single file). It generates the different packages (.tar.gz / zip) including the reference assembly as well.
+- `test` — Executes all the provided examples as a test
 
-All the packages are dropped into /out/pkg/
+All the packages are dropped into `out/pkg/`.
 
-Version build number is generated automatically.
+### Version numbering
 
-The publish action generates the configuration and updates the doc/api.md file with the latest's changes using an xml to markdown extension which is on the scripts folder (pretty simple and ugly yet)
+The version build number is generated automatically during the `publish` action. It is extracted from the Git tag and injected into `src/version.cs` before compilation. The tag format is `v<MAJOR>.<MINOR>.<BUILDNUMBER>` (e.g., `v1.4.20260520`), where BUILDNUMBER is typically YYYYMMDD.
 
-If you want to publish the packages on github you can use the action "release" which is just a wrapper on top of "publish" and then it will use the generated packages to create a new release on github with the corresponding assets.
-You must provide the GITHUB_TOKEN secret in order to use that action, you can generate it from your github account with the corresponding permissions to create releases.
-The token must be placed in the "kltv_token" environment variable
+### Creating a release
+
+Releases are triggered automatically via GitHub Actions when you push a Git tag matching the pattern `v*`. Do NOT push tags manually to run the build locally — use the `kombine publish` and `kombine release` actions instead (requires `GITHUB_TOKEN` in `kltv_token` environment variable).
+
+To create a release:
+
+```bash
+git tag v1.4.20260520
+git push origin v1.4.20260520
+```
+
+GitHub Actions will then:
+1. Run the test suite on Windows
+2. Cross-compile for all three platforms (Windows, Linux, macOS)
+3. Package all 7 artifacts (debug + release for each platform, plus reference assembly)
+4. Create a GitHub release with all artifacts attached
+
+The workflow is defined in `.github/workflows/main-release.yml`.
 
 ## Source code structure
 
