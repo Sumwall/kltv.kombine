@@ -1,4 +1,14 @@
+
 # Kombine Build System
+
+<table>
+  <tr>
+    <td><a href="https://github.com/Sumwall/kltv.kombine/actions/workflows/pr-test.yml"><img src="https://github.com/Sumwall/kltv.kombine/actions/workflows/pr-test.yml/badge.svg" alt="Kombine tests"/></a></td>
+    <td><a href="https://github.com/Sumwall/kltv.kombine/actions/workflows/main-release.yml"><img src="https://github.com/Sumwall/kltv.kombine/actions/workflows/main-release.yml/badge.svg" alt="Kombine Release"/></a></td>
+  </tr>
+</table>
+
+## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
