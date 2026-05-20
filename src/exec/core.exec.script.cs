@@ -365,12 +365,12 @@ string ParentScriptFolder { get { return Folders.ParentScriptFolder; } }
 			CSharpCompilationOptions options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 			// Initialize the compilation opptions.
 			{
-				// Do not allow unsafe code. 
+				// Do not allow unsafe code.
 				options = options.WithAllowUnsafe(false);
 				// Identity comparer maybe is needed if we allow #r directives
 				// -> options.WithAssemblyIdentityComparer( AssemblyIdentityComparer )
-				// Allow concurrent build.
-				options = options.WithConcurrentBuild(true);
+				// Allow concurrent build - disabled due to Roslyn 5.0.0 crashes on .NET 10.0
+				options = options.WithConcurrentBuild(false);
 				// Crypto options
 				// CryptoKeyContainer: The name of the key container that contains the key pair used to generate a strong name for the compilation's output assembly.
 				// CryptoKeyFile: The path to the file that contains the key pair used to generate a strong name for the compilation's output assembly.
@@ -401,8 +401,10 @@ string ParentScriptFolder { get { return Folders.ParentScriptFolder; } }
 				options = options.WithModuleName(ModuleName);
 				// Script class name.
 				options = options.WithScriptClassName(ClassName);
-				// Nullability: We will use the default one but this is prone to be tweaked by command line / config
-				options = options.WithNullableContextOptions(NullableContextOptions.Enable);
+				// Nullability: Disabled due to Roslyn 5.0.0 crashes on .NET 10.0
+				// TODO: Re-enable when Roslyn is updated to a version without this bug
+				// Tracking issue: https://github.com/dotnet/roslyn/issues/XXXXX
+				options = options.WithNullableContextOptions(NullableContextOptions.Disable);
 				// Optimization level & debug
 				if (Debug) {
 					Msg.PrintMod("Setting options to build on debug mode (invoked with -ksdbg)", ".exec.script", Msg.LogLevels.Debug);
@@ -475,11 +477,20 @@ string ParentScriptFolder { get { return Folders.ParentScriptFolder; } }
 			// Try to compile the script
 			//
 			try {
-				// 
+				//
 				// Building block
 				//
 				Msg.PrintMod("Evaluate and build the code.", ".exec.script", Msg.LogLevels.Debug);
-				var BuildResults = compilation.GetDiagnostics();
+
+				// NOTE: GetDiagnostics() can crash due to a Roslyn 5.0.0 bug on .NET 10.0
+				// We wrap it in try-catch to handle the crash gracefully
+				var BuildResults = System.Collections.Immutable.ImmutableArray<Diagnostic>.Empty;
+				try {
+					BuildResults = compilation.GetDiagnostics();
+				} catch (Exception diagEx) {
+					Msg.PrintWarningMod($"GetDiagnostics() threw exception (Roslyn bug): {diagEx.GetType().Name}. Proceeding without diagnostics.", ".exec.script");
+				}
+
 				// We may want to check BuildResults even if building exceptions are trapped.
 				//
 				if (BuildResults.Length > 0) {
@@ -489,7 +500,7 @@ string ParentScriptFolder { get { return Folders.ParentScriptFolder; } }
 						if (res.IsWarningAsError){
 							Msg.PrintWarning(res.ToString());
 						} else{
-							Msg.PrintError(res.ToString()); 
+							Msg.PrintError(res.ToString());
 						}
 					}
 					Msg.EndIndent();
