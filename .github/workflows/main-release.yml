@@ -32,21 +32,10 @@ jobs:
       - name: Run test suite
         run: .\out\bin\win-x64\debug\mkb.exe -kfile:kombine.csx test
 
-  test-macos:
-    name: Test (${{ matrix.label }})
-    runs-on: ${{ matrix.runner }}
+  test-macos-arm64:
+    name: Test (macOS ARM64)
+    runs-on: macos-latest
     timeout-minutes: 60
-    strategy:
-      matrix:
-        include:
-          - runner: macos-latest
-            rid: osx-arm64
-            label: macOS ARM64
-            bin_path: ./out/bin/osx-arm64/debug/mkb
-          - runner: macos-13
-            rid: osx-x64
-            label: macOS x64
-            bin_path: ./out/bin/osx-x64/debug/mkb
 
     steps:
       - name: Checkout
@@ -65,14 +54,14 @@ jobs:
           echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
 
       - name: Build mkb (Debug)
-        run: dotnet build src/kombine.csproj -c Debug -r ${{ matrix.rid }} -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
+        run: dotnet build src/kombine.csproj -c Debug -r osx-arm64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
 
       - name: Run test suite
-        run: ${{ matrix.bin_path }} -kfile:kombine.csx test
+        run: ./out/bin/osx-arm64/debug/mkb -kfile:kombine.csx test
 
   package:
     name: Package and Release
-    needs: [test-windows, test-macos]
+    needs: [test-windows, test-macos-arm64]
     runs-on: ubuntu-latest
     timeout-minutes: 180
 
@@ -118,19 +107,6 @@ jobs:
       - name: Package Windows x64 release
         run: zip -j out/pkg/kombine.win.x64.zip out/pub/win-x64/release/mkb.exe
 
-      # Windows ARM64
-      - name: Build Windows ARM64 (Release)
-        run: dotnet build src/kombine.csproj -c Release -r win-arm64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
-
-      - name: Package Windows ARM64 debug
-        run: (cd out/bin/win-arm64/release && zip -r ../../../../out/pkg/kombine.debug.win.arm64.zip . -x "ref/*" "*.pdb")
-
-      - name: Publish Windows ARM64 (single-file)
-        run: dotnet publish src/kombine.csproj -c Release -r win-arm64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
-
-      - name: Package Windows ARM64 release
-        run: zip -j out/pkg/kombine.win.arm64.zip out/pub/win-arm64/release/mkb.exe
-
       # Linux x64
       - name: Build Linux x64 (Release)
         run: dotnet build src/kombine.csproj -c Release -r linux-x64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
@@ -143,32 +119,6 @@ jobs:
 
       - name: Package Linux x64 release
         run: tar -czf out/pkg/kombine.lnx.x64.tar.gz -C out/pub/linux-x64/release mkb
-
-      # Linux ARM64
-      - name: Build Linux ARM64 (Release)
-        run: dotnet build src/kombine.csproj -c Release -r linux-arm64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
-
-      - name: Package Linux ARM64 debug
-        run: tar -czf out/pkg/kombine.debug.lnx.arm64.tar.gz -C out/bin/linux-arm64/release .
-
-      - name: Publish Linux ARM64 (single-file)
-        run: dotnet publish src/kombine.csproj -c Release -r linux-arm64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
-
-      - name: Package Linux ARM64 release
-        run: tar -czf out/pkg/kombine.lnx.arm64.tar.gz -C out/pub/linux-arm64/release mkb
-
-      # macOS x64
-      - name: Build macOS x64 (Release)
-        run: dotnet build src/kombine.csproj -c Release -r osx-x64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
-
-      - name: Package macOS x64 debug
-        run: tar -czf out/pkg/kombine.debug.osx.x64.tar.gz -C out/bin/osx-x64/release .
-
-      - name: Publish macOS x64 (single-file)
-        run: dotnet publish src/kombine.csproj -c Release -r osx-x64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
-
-      - name: Package macOS x64 release
-        run: tar -czf out/pkg/kombine.osx.x64.tar.gz -C out/pub/osx-x64/release mkb
 
       # macOS ARM64
       - name: Build macOS ARM64 (Release)
@@ -192,14 +142,8 @@ jobs:
             out/pkg/kombine.ref.zip
             out/pkg/kombine.win.x64.zip
             out/pkg/kombine.debug.win.x64.zip
-            out/pkg/kombine.win.arm64.zip
-            out/pkg/kombine.debug.win.arm64.zip
             out/pkg/kombine.lnx.x64.tar.gz
             out/pkg/kombine.debug.lnx.x64.tar.gz
-            out/pkg/kombine.lnx.arm64.tar.gz
-            out/pkg/kombine.debug.lnx.arm64.tar.gz
-            out/pkg/kombine.osx.x64.tar.gz
-            out/pkg/kombine.debug.osx.x64.tar.gz
             out/pkg/kombine.osx.arm64.tar.gz
             out/pkg/kombine.debug.osx.arm64.tar.gz
           draft: false
