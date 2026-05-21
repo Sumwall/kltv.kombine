@@ -1,3 +1,16 @@
+## [1.4.20260520]
+
+- [Feature] Added Mach-O 64-bit object file format support to bin2obj extension
+- [Feature] Architecture-aware C/C++ compiler flags (disable -msse3 on ARM64)
+- [Feature] Platform-aware source filtering in examples (SDL2, MSYS2)
+- [Feature] macOS ARM64 (Apple Silicon) full support and testing
+- [Bugfix] Fixed Directory.Build.props case sensitivity for Linux CI
+- [Bugfix] Fixed MSYS2 test to skip gracefully on non-Windows platforms
+- [Bugfix] Added LLVM/lld installation for macOS clang extension support
+- [Bugfix] Fixed Roslyn 5.0.0 crashes on .NET 10.0 (concurrent build, nullable options)
+- [Updated] .NET target framework from 8.0 to 10.0 (latest stable)
+- [Updated] CI workflow to .NET 10.0.x and focused on 3 core platforms (win-x64, linux-x64, osx-arm64)
+- [Updated] Documentation with macOS ARM64 setup instructions
 
 ## [1.4.24072788]
 - [Feature] Added methods in Http API to support uploads and credentials
