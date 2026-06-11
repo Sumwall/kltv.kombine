@@ -405,6 +405,11 @@ string ParentScriptFolder { get { return Folders.ParentScriptFolder; } }
 				// TODO: Re-enable when Roslyn is updated to a version without this bug
 				// Tracking issue: https://github.com/dotnet/roslyn/issues/XXXXX
 				options = options.WithNullableContextOptions(NullableContextOptions.Disable);
+				// With the nullable context disabled, scripts using nullable annotations would emit
+				// CS8632 on every compile. Suppress it until the nullable context can be re-enabled.
+				options = options.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic> {
+					{ "CS8632", ReportDiagnostic.Suppress }
+				});
 				// Optimization level & debug
 				if (Debug) {
 					Msg.PrintMod("Setting options to build on debug mode (invoked with -ksdbg)", ".exec.script", Msg.LogLevels.Debug);
@@ -492,20 +497,27 @@ string ParentScriptFolder { get { return Folders.ParentScriptFolder; } }
 				}
 
 				// We may want to check BuildResults even if building exceptions are trapped.
+				// Warnings are reported but only errors (or warnings promoted to errors) abort the build.
 				//
-				if (BuildResults.Length > 0) {
+				bool HasErrors = BuildResults.Any(res => res.Severity == DiagnosticSeverity.Error || res.IsWarningAsError);
+				if (HasErrors) {
 					Msg.PrintErrorMod("Errors found compiling the script: "+filename, ".exec.script");
 					Msg.BeginIndent();
 					foreach (Diagnostic res in BuildResults) {
-						if (res.IsWarningAsError){
-							Msg.PrintWarning(res.ToString());
-						} else{
+						if (res.Severity == DiagnosticSeverity.Error || res.IsWarningAsError){
 							Msg.PrintError(res.ToString());
+						} else{
+							Msg.PrintWarning(res.ToString());
 						}
 					}
 					Msg.EndIndent();
 					Msg.PrintErrorMod("Aborting.", ".exec.script");
 					return false;
+				}
+				foreach (Diagnostic res in BuildResults) {
+					if (res.Severity == DiagnosticSeverity.Warning) {
+						Msg.PrintWarning(res.ToString());
+					}
 				}
 				Msg.PrintMod("Compilation done.", ".exec.script", Msg.LogLevels.Debug);
 				// Get the compilation
