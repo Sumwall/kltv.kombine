@@ -116,6 +116,10 @@ namespace Kltv.Kombine
 		/// </summary>
 		private static void ParseCommandLine() {
 			string[] commands = Environment.GetCommandLineArgs();
+			// Standard help aliases. Only honored when used alone as the first and only argument,
+			// so "-h"/"--help" remain usable as action names or action parameters.
+			if (commands.Length == 2 && ((commands[1] == "-h") || (commands[1] == "--help")))
+				commands[1] = "khelp";
 			List<string> parameters = new List<string>();
 			// Parse tool parameters
 			for (int a = 0; a != commands.Length; a++) {
@@ -246,7 +250,7 @@ namespace Kltv.Kombine
 			Msg.Print("         there are some reserved actions for the tool itself which cannot be used for the scripts:");
 			Msg.Print("");
 			Msg.Print(" kversion: Shows tool version and exit.");
-			Msg.Print(" khelp: Show this help and exit.");
+			Msg.Print(" khelp: Show this help and exit. Also available as \"-h\" or \"--help\" when used alone.");
 			Msg.Print(" kconfig: Manages the tool configuration.");
 			Msg.Print(" kcache: Manages the tool cache.");
 			Msg.Print("");

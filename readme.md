@@ -124,7 +124,7 @@ The tool is case sensitive. This is the output if you just execute "mkb". "mkb" 
 		 there are some reserved actions for the tool itself which cannot be used for the scripts:
 
  kversion: Shows tool version and exit.
- khelp: Show this help and exit.
+ khelp: Show this help and exit. Also available as "-h" or "--help" when used alone.
  kconfig: Manages the tool configuration.
  kcache: Manages the tool cache.
 
