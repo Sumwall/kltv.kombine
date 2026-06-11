@@ -225,9 +225,10 @@ namespace Kltv.Kombine
 		/// 
 		/// </summary>
 		public static void ShowHelp() {
-			Msg.BeginIndent();
+			ShowBanner();
 			Msg.Print("mkb [parameters] [action] [action parameters]");
 			Msg.Print("");
+			Msg.BeginIndent();
 			Msg.Print("[parameters] They are optional and can be any of the following:");
 			Msg.Print("");
 			Msg.Print("-ksdbg");
