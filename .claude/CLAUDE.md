@@ -154,6 +154,17 @@ When adding, removing, or renaming files or root dotfiles, **update `kombine.sln
 - **Removing a file**: Remove its `SolutionItems` entry. If the containing solution folder becomes empty, remove it and its nesting entry.
 - **Renaming/moving a file**: Update the path in the `SolutionItems` entry.
 
+## Changelog Maintenance
+
+⚠️ **Always keep `changelog.md` in mind on this project.** The release workflow builds the GitHub release notes from `changelog.md`: it extracts the section under the `## [<version>]` heading that matches the tag (e.g. tag `v1.4.20260611` → `## [1.4.20260611]`). A missing or mismatched entry means the published release ships with **empty notes**.
+
+Therefore, whenever a change is user-facing or affects behavior, the CLI, the build, or the release packages:
+
+- **Ask the developer whether to add or update a `changelog.md` entry** before treating the task as done. Do not silently skip it, and do not write it without asking first.
+- New versions go at the **top** of the file as `## [<MAJOR>.<MINOR>.<BUILDNUMBER>]`, where the build number is the release date `YYYYMMDD`.
+- Use the existing bullet tags: `[Feature]`, `[Bugfix]`, `[Updated]`, `[Security]`, `[Misc]`.
+- Write entries for users (what changed and why it matters), not a commit-by-commit log.
+
 ## Skills
 
 Invoke matching skill IMMEDIATELY via Skill tool. Do not attempt manual solutions.
