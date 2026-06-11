@@ -63,7 +63,7 @@ You can make this permanent by adding it to your shell profile (`.zshrc` or `.ba
 For this case we use Kombine. There is one Kombine script in the root of the repository which supports actions:
 
 - `build` — Just a wrapper on top of `dotnet build`
-- `publish` — Builds in release for the three target OS (Windows, Linux and Mac OSX) the two flavors (unpacked and single file). It generates the different packages (.tar.gz / zip) including the reference assembly as well.
+- `publish` — Builds in release for the three target OS (Windows, Linux and Mac OSX) the two flavors (unpacked and single file). It generates the different packages (.tar.gz / zip).
 - `test` — Executes all the provided examples as a test
 
 All the packages are dropped into `out/pkg/`.
@@ -86,7 +86,7 @@ git push origin v1.4.20260520
 GitHub Actions will then:
 1. Run the test suite on Windows
 2. Cross-compile for all three platforms (Windows, Linux, macOS)
-3. Package all 7 artifacts (debug + release for each platform, plus reference assembly)
+3. Package the 6 artifacts (debug + release for each platform); the single-file release packages bundle the `mkb.dll` reference assembly next to the executable
 4. Create a GitHub release with all artifacts attached
 
 The workflow is defined in `.github/workflows/main-release.yml`.

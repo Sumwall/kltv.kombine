@@ -74,8 +74,6 @@ int publish(string[] args){
 		return ExitCode;
 	Msg.Print("Creating output folder.");
 	Folders.Create("../out/pkg");
-	Msg.Print("Compress the reference assembly");
-	Compress.Zip.CompressFile("../out/bin/win-x64/release/ref/mkb.dll","../out/pkg/kombine.ref.zip");
 	Msg.Print("[Windows] Compress the unpacked tool");
 	Compress.Zip.CompressFolder("../out/bin/win-x64/release/","../out/pkg/kombine.debug.win.zip",true,false);
 	// Generate the single file package
@@ -167,7 +165,6 @@ int release(string[] args) {
 	// If the release was created successfully, upload the assets
 	//
 	string[] assets = new string[] {
-		"out/pkg/kombine.ref.zip",
 		"out/pkg/kombine.debug.win.zip",
 		"out/pkg/kombine.win.zip",
 		"out/pkg/kombine.debug.lnx.tar.gz",

@@ -97,9 +97,6 @@ jobs:
       - name: Package Windows x64 debug
         run: (cd out/bin/win-x64/release && zip -r ../../../../out/pkg/kombine.debug.win.x64.zip . -x "ref/*" "*.pdb")
 
-      - name: Package reference assembly
-        run: zip -j out/pkg/kombine.ref.zip out/bin/win-x64/release/ref/mkb.dll
-
       - name: Publish Windows x64 (single-file)
         run: dotnet publish src/kombine.csproj -c Release -r win-x64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
 
@@ -152,7 +149,6 @@ jobs:
           name: ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.body }}
           files: |
-            out/pkg/kombine.ref.zip
             out/pkg/kombine.win.x64.zip
             out/pkg/kombine.debug.win.x64.zip
             out/pkg/kombine.lnx.x64.tar.gz
