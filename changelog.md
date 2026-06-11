@@ -1,3 +1,11 @@
+## [1.4.20260611]
+
+- [Feature] `mkb -h` and `mkb --help` now act as aliases for the `khelp` action
+- [Feature] Help output shows the engine banner and version; local and debug builds report the version as "development"
+- [Bugfix] Build scripts that only produce warnings (for example nullable annotations) no longer abort compilation — only real errors stop the build
+- [Updated] The reference assembly (`mkb.dll`) now ships next to the executable inside the release packages; the standalone `kombine.ref.zip` download has been retired
+- [Updated] CI now runs the test suite on pushes to `main`
+
 ## [1.4.20260520]
 
 - [Feature] Added Mach-O 64-bit object file format support to bin2obj extension
