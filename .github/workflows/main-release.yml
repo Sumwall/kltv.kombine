@@ -104,7 +104,7 @@ jobs:
         run: dotnet publish src/kombine.csproj -c Release -r win-x64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
 
       - name: Package Windows x64 release
-        run: zip -j out/pkg/kombine.win.x64.zip out/pub/win-x64/release/mkb.exe
+        run: zip -j out/pkg/kombine.win.x64.zip out/pub/win-x64/release/mkb.exe out/bin/win-x64/release/ref/mkb.dll
 
       # Linux x64
       - name: Build Linux x64 (Release)
@@ -117,7 +117,9 @@ jobs:
         run: dotnet publish src/kombine.csproj -c Release -r linux-x64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
 
       - name: Package Linux x64 release
-        run: tar -czf out/pkg/kombine.lnx.x64.tar.gz -C out/pub/linux-x64/release mkb
+        run: |
+          cp out/bin/linux-x64/release/ref/mkb.dll out/pub/linux-x64/release/mkb.dll
+          tar -czf out/pkg/kombine.lnx.x64.tar.gz -C out/pub/linux-x64/release mkb mkb.dll
 
       # macOS ARM64
       - name: Build macOS ARM64 (Release)
@@ -130,7 +132,9 @@ jobs:
         run: dotnet publish src/kombine.csproj -c Release -r osx-arm64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
 
       - name: Package macOS ARM64 release
-        run: tar -czf out/pkg/kombine.osx.arm64.tar.gz -C out/pub/osx-arm64/release mkb
+        run: |
+          cp out/bin/osx-arm64/release/ref/mkb.dll out/pub/osx-arm64/release/mkb.dll
+          tar -czf out/pkg/kombine.osx.arm64.tar.gz -C out/pub/osx-arm64/release mkb mkb.dll
 
       - name: Extract changelog for release
         id: changelog
