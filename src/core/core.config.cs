@@ -53,6 +53,11 @@ namespace Kltv.Kombine
 		public static bool SaveAlwaysOnExit {get; private set; } = false;
 
 		/// <summary>
+		/// If the deprecated recursive forward search may resolve #load / child script references (-kforward)
+		/// </summary>
+		public static bool ResolveForward { get; private set; } = false;
+
+		/// <summary>
 		/// Action to be executed
 		/// </summary>
 		public static string Action { get; private set; } = string.Empty;
@@ -207,6 +212,10 @@ namespace Kltv.Kombine
 				ScriptFile = cmd.Substring(7);
 				return true;
 			}
+			if (cmd == "-kforward") {
+				ResolveForward = true;
+				return true;
+			}
 			return false;
 		}
 
@@ -245,6 +254,8 @@ namespace Kltv.Kombine
 			Msg.Print("   Script output will be debug.");
 			Msg.Print("-kfile:filename");
 			Msg.Print("   Indicates which script file we should execute (default kombine.csx)");
+			Msg.Print("-kforward");
+			Msg.Print("   Allows the deprecated recursive forward search to resolve #load / child script references.");
 			Msg.Print("");
 			Msg.Print("[action] Action to be executed. If not specified the default action is \"khelp\"");
 			Msg.Print("         The action is used to specify which function in the script should be called after evaluation but");

@@ -1,3 +1,10 @@
+## [1.5.20260706]
+
+- [Feature] `#load` and child script resolution is now deterministic: including file directory, script directory, current directory, backward trace and tool directory, in that order. The recursive forward search (walk of every subfolder, first match wins) no longer runs by default — with repos that embed other repos sharing the same relative layout it could silently bind a foreign copy of a helper, and the state cache then persisted the wrong bind
+- [Feature] New `-kforward` switch re-enables the forward search as a deprecated bridge; every forward hit prints a warning naming the source and the resolved file. Without the switch, a reference that only the forward search could satisfy fails the compile naming the file it would have picked and how to fix it
+- [Feature] Every `#load` prints its resolved absolute path on real compiles (one line per include), so a wrong binding is visible instead of silent
+- [Misc] Added the `08.loadresolution` example: two repos sharing the same helper layout, one embedded inside the other's dependency folder, asserting each script binds its own repo's helpers
+
 ## [1.4.20260611]
 
 - [Feature] `mkb -h` and `mkb --help` now act as aliases for the `khelp` action
