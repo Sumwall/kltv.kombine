@@ -44,6 +44,10 @@ int test(string[] args){
 	Kombine("03.child/mkb.child.csx","test",args);
 	Msg.Print("----------------------------------------------------------");
 	Msg.Print("");
+	Msg.Print("Testing: #load resolution");
+	Kombine("08.loadresolution/mkb.loadresolution.csx","test",args);
+	Msg.Print("----------------------------------------------------------");
+	Msg.Print("");
 	Msg.Print("Testing: Files & folders & compression");
 	Kombine("04.folders/mkb.folders.csx","test",args);
 	Msg.Print("----------------------------------------------------------");

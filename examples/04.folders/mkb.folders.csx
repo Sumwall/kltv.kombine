@@ -38,8 +38,10 @@ int test(string[] args){
 	Msg.Print("Search forward. File found: "+filefound);
 	Msg.Print("Execute child to test folders from child");
 	Kombine("child/child.csx","test");
-	Msg.Print("Execute it again but letting the system to search for the script");
-	Kombine("child.csx","test");
+	Msg.Print("Execute it again locating the script first with the forward search");
+	// Automatic forward search on dispatch is deprecated (-kforward); search explicitly instead.
+	KValue childscript = Folders.SearchForwardPath("child.csx");
+	Kombine(childscript,"test");
 
 	// File Operations
 	// -------------------------------------------------

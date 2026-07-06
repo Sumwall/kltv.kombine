@@ -31,7 +31,8 @@ namespace Kltv.Kombine {
 		/// -ko:verbose or -ko:v : Output will be verbose
 		/// -ko:debug or -ko:d   : Output will be debug
 		/// -kfile: Indicates which script file we should execute (default kombine.csx)
-		/// 
+		/// -kforward: Allows the deprecated recursive forward search to resolve #load / child script references
+		///
 		/// [action] Action to be executed. If not specified the default action is "khelp"
 		/// The action is used to specify which function in the script should be called after evaluation but
 		/// there are some reserved actions for the tool itself which cannot be used for the scripts:
