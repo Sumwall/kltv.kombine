@@ -105,9 +105,9 @@ namespace Kltv.Kombine {
 					baseDir = Path.GetDirectoryName(baseFilePath);
 				string? resolvedPath = Folders.ResolveFilename(path, baseDir, ScriptPath);
 				if (resolvedPath != null) {
-					// One line per include on every real compile so a wrong bind is visible instead of silent.
-					// Compiles only happen on cache misses, so this does not show on cached runs.
-					Msg.PrintMod("#load \"" + path + "\" -> " + resolvedPath, ".exec.script.sourceresolver", Msg.LogLevels.Normal);
+					// One line per include on real compiles, behind verbose so normal builds stay quiet.
+					// Anomalies keep printing at normal level: unresolved references and forward search hits.
+					Msg.PrintMod("#load \"" + path + "\" -> " + resolvedPath, ".exec.script.sourceresolver", Msg.LogLevels.Verbose);
 					// Save the dependency in the state
 					//
 					// Get the modification time of the dependency file
