@@ -4,6 +4,9 @@
 - [Bugfix] A queued command that produced no result now fails the whole batch (error + exit code -1) instead of being logged only at verbose level and treated as success
 - [Misc] Launch-failure diagnostics now name the command, and the "could not launch" message prints at normal level
 - [Misc] Lighter, faster CI: a new `mkb smoke` action runs only the fast engine-core examples (no clang, sdl2, msys2 or network). Pull-request checks and the release test gate now run `smoke` on a single platform instead of the full suite on several
+- [Security] Updated SharpCompress 0.42.0 → 0.49.1, clearing a medium-severity zip-slip / directory-traversal advisory (GHSA-6c8g-7p36-r338) that affected archive extraction in versions up to 0.47.4
+- [Security] Tar extraction now refuses any entry whose path escapes the destination folder, closing the manual long-name and directory branches that bypassed the library guard; covered by a new round-trip + zip-slip rejection example test
+- [Misc] Warning-clean build: dropped the framework-provided System.Text.Json package reference and fixed an inexact stream read (CA2022) in the file-content comparison
 
 ## [1.5.20260706]
 
