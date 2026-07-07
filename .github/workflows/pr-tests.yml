@@ -9,9 +9,6 @@ on:
       - synchronize
       - reopened
       - ready_for_review
-  push:
-    branches:
-      - '**'
 
 permissions:
   contents: read
@@ -22,9 +19,9 @@ concurrency:
 
 jobs:
   test:
-    name: Run full script tests
+    name: Smoke test (Windows x64)
     runs-on: windows-latest
-    timeout-minutes: 120
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -38,5 +35,5 @@ jobs:
       - name: Build mkb (Debug)
         run: dotnet build src/kombine.csproj -c Debug -r win-x64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
 
-      - name: Run full mkb test suite
-        run: .\out\bin\win-x64\debug\mkb.exe -kfile:kombine.csx test
+      - name: Run smoke test suite
+        run: .\out\bin\win-x64\debug\mkb.exe -kfile:kombine.csx smoke

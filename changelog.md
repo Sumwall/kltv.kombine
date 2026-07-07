@@ -3,6 +3,7 @@
 - [Bugfix] Async command queue: an immediate process-spawn failure is now retried up to three times with a short backoff before giving up, and the final failed result is recorded so it counts against the batch instead of vanishing silently
 - [Bugfix] A queued command that produced no result now fails the whole batch (error + exit code -1) instead of being logged only at verbose level and treated as success
 - [Misc] Launch-failure diagnostics now name the command, and the "could not launch" message prints at normal level
+- [Misc] Lighter, faster CI: a new `mkb smoke` action runs only the fast engine-core examples (no clang, sdl2, msys2 or network). Pull-request checks and the release test gate now run `smoke` on a single platform instead of the full suite on several
 
 ## [1.5.20260706]
 
