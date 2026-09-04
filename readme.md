@@ -1,197 +1,236 @@
 # Kombine Build System
 
+<table>
+  <tr>
+    <td><a href="https://github.com/kollective-networks/kltv.kombine/actions/workflows/pr-tests.yml"><img src="https://github.com/kollective-networks/kltv.kombine/actions/workflows/pr-tests.yml/badge.svg" alt="Kombine tests"/></a></td>
+    <td><a href="https://github.com/kollective-networks/kltv.kombine/releases/latest"><img src="https://img.shields.io/github/v/release/kollective-networks/kltv.kombine?sort=date" alt="Kombine Release"/></a></td>
+  </tr>
+</table>
+
+Kombine is a small, cross-platform build system whose build scripts are written in plain C#. You get a real programming language instead of a custom DSL, and a single self-contained executable that needs nothing else installed to run.
+
+## Table of Contents
+
 - [Overview](#overview)
 - [Features](#features)
 - [Feature state](doc/features.md)
 - [Download and Installation](#download-and-installation)
 - [Usage](#usage)
+  - [Exit codes](#exit-codes)
 - [Script structure and execution](#script-structure-and-execution)
-   * [Enable intellisense in your editor](#enable-intellisense-in-your-editor)
-   * [Debugging your scripts](#debugging-your-scripts)
+  - [Enable intellisense in your editor](#enable-intellisense-in-your-editor)
+  - [Debugging your scripts](#debugging-your-scripts)
 - [Executing child scripts and sharing values between your scripts](#executing-child-scripts-and-sharing-values-between-your-scripts)
-   * [Using Import/Export](#using-importexport)
-   * [Using Shared API](#using-shared-api)
-   * [Using Registry API](#using-registry-api)
+  - [Using Import/Export](#using-importexport)
+  - [Using Shared API](#using-shared-api)
+  - [Using Registry API](#using-registry-api)
 - [The most simple example, execute a tool and fetch the results](#the-most-simple-example-execute-a-tool-and-fetch-the-results)
 - [Extending Kombine](#extending-kombine)
+- [Examples](#examples)
 - [Requirements to create Kombine](doc/reasons.md)
 - [Building the Kombine tool](doc/building.md)
+- [Creating a Release](#creating-a-release)
 - [API reference](doc/api.md)
 - [TODO List](doc/todo.md)
 - [License](#license)
 
-
 ## Overview
 
-There are a ton of different building systems but we had some specific requirements that doesn't fit with the current ones. Don't get us wrong. The real problem behind is we wanted some bits from each tool. If you want to have fun, just read [this](https://www.reddit.com/r/cpp/comments/i7825h/build_system_whats_your_favorite/).
+There are plenty of build systems out there, but none of them fit the exact set of requirements we had. The honest truth is that we wanted a few bits from each of them. If you want some background reading, this [thread on build systems](https://www.reddit.com/r/cpp/comments/i7825h/build_system_whats_your_favorite/) is a fun one.
 
-For a complete list of the requirements and the underlying reasons to create a new build tool, [check this](doc/reasons.md).
+For the full list of requirements and the reasons we built our own, see [the reasons document](doc/reasons.md).
 
-Kombine is just a plain / simple build system. It is based on the [Roslyn Compiler](https://github.com/dotnet/roslyn) and created in C#, so, in fact, the language you use to create the build scripts is C#. Easy syntax, self explanatory and portable across platforms.
-It is single file / self contained so you don't need Dotnet to execute it. Kombine will load and execute your build scripts without any other requirement. You don't know C#? Don't be afraid, we kept as simple as possible so it is not required to be a C# master to define a script. Check [Usage](#usage) to start digging into the build scripts.
+Kombine is a plain, simple build system built on the [Roslyn compiler](https://github.com/dotnet/roslyn) and written in C#, so the language you write your build scripts in is C# too. The syntax is easy, mostly self-explanatory, and the same script runs on every supported platform.
+
+The tool ships as a single, self-contained file, so you do **not** need .NET installed to run it. Kombine loads and runs your build scripts with nothing else required. Don't know C#? Don't worry: we kept the common cases simple enough that you don't need to be a C# expert to write a script. Head to [Usage](#usage) to get started.
 
 ## Features
 
-- Works on Windows, Linux and Mac OSX
-- Implements an easy way to pass and receive parameters in your build script(s)
-- Launches any tool (commands can be queued, launched in parallel)
-- Receives the tool result in a way you can do whatever you want (the entire stdout / stderr and codes)
-- Being C# you can use all the string manipulation facilities or regular expressions or anything required to parse text files, results and more.
-- Has functions to deal with folders cross platform ( create / delete / copy)
-- Has functions to deal with files cross platform (exists, create, write, delete)
-- Has two builtin types (KValue / KList) for values or list of values, so, you can use simpler syntax to maintain a list of arguments for a tool.
-- Has consistent information about the host environemnt so you don't need to write custom code for each platform just to know if you're running under root, for example.
-- Has http download facility, avoiding then install a third party tool or use a different one depending on the host os.
-- Has console output (including colors for warnings and errors), indentation and even an integrated progress bar.
-- Has the capability to share your variables to your child process environement or scripts.
-- Has the capability to share your objects (for example a file opened) to your child scripts.
-- Has the capability to register in your build variables that should be consulted by the rest of the scripts.
-- Has file globbing facilities, so, you don't need to specify every single file in your build
-- Has the capability to launch child scripts without requiring create another process.
+- Works on Windows, Linux and macOS.
+- Gives you an easy way to pass parameters into your build scripts and read them back.
+- Launches any external tool, with support for queuing commands and running them in parallel.
+- Hands you the full tool result (stdout, stderr and the exit code) so you can do whatever you want with it.
+- Being C#, you have all the usual string handling, regular expressions and text parsing at your disposal.
+- Provides cross-platform helpers for folders (create, delete, copy).
+- Provides cross-platform helpers for files (exists, create, write, delete).
+- Ships two built-in types, `KValue` and `KList`, for single values and lists, with a simpler syntax for building up tool arguments.
+- Exposes consistent information about the host environment, so you don't need platform-specific code just to check, for example, whether you are running as root.
+- Includes an HTTP download helper, so you don't have to install or shell out to a separate tool per platform.
+- Has rich console output (including colored warnings and errors), indentation and a built-in progress bar.
+- Can share variables with child processes and child scripts.
+- Can share objects (for example an open file) with child scripts.
+- Can register build values in a shared registry that the rest of your scripts can read.
+- Has file globbing, so you don't have to list every single file in your build.
+- Can run child scripts in-process, without spawning another process.
 
 ## Download and Installation
 
-You have all the files in the [releases](https://github.com/kollective-networks/kltv.kombine/releases) page. 
+All releases and downloads live on the [releases page](https://github.com/kollective-networks/kltv.kombine/releases).
 
-Just grab the file for your platform ( [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.win.zip), [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.lnx.tar.gz) or [Mac OSX](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.osx.tar.gz) ) a place it on the path. Nothing else.
+### Single-file executables (recommended)
 
-That's all. No other dependencies. No other languages. You're done. That's the way we [wanted](doc/reasons.md).
+These are self-contained and ready to use. Extract the archive and put the executable on your `PATH`:
 
-If you plan to use intellisense to edit your scripts maybe you need the reference assembly to be used as input for intellisense.
-You can take it from [here](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.ref.zip). In that case refer to your IDE about requirements to support the language (C#) and how to activate / use the intellisense.
+- [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.win.x64.zip)
+- [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.lnx.x64.tar.gz)
+- [macOS (Apple Silicon)](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.osx.arm64.tar.gz)
 
-If you plan to debug your build scripts (yes, they can be debugged) you may require a Dotnet debugger. Refer to your IDE/environement about requirements to support debug the language (C#) and how to use it. Since there is a bug in the Dotnet debugger(s) that may impact you (regarding to debug a single file executable) we provide the unpacked versions as well so, if required, you can grab them here for [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.win.zip), [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.lnx.tar.gz) and [Mac OSX](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.osx.tar.gz)
+That's it. No other dependencies, no other languages, you're done. That's exactly the way we [wanted it](doc/reasons.md).
 
-Take a look into the "examples.debug" project as an example about how to debug inside Visual Studio (is a makefile project that just launch the Kombine tool to execute the example scripts with the managed debugger attached)
+These packages also include `mkb.dll` (the reference assembly) next to the executable. You only need it to enable editor intellisense while writing scripts; it is never used when the tool runs. To turn intellisense on, copy that `mkb.dll` next to your script — see [Enable intellisense in your editor](#enable-intellisense-in-your-editor).
+
+### Debug / unpacked versions (optional)
+
+If you need to debug your build scripts with a .NET debugger, grab the unpacked builds instead. They work around a debugger limitation with single-file executables (see [Debugging your scripts](#debugging-your-scripts)):
+
+- [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.win.x64.zip)
+- [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.lnx.x64.tar.gz)
+- [macOS (Apple Silicon)](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.osx.arm64.tar.gz)
 
 ## Usage
 
-The usage is pretty simple:
+The basic shape of a command is:
 
-```mkb [parameters] [action] [action parameters]```
-
-The tool is case sensitive. This is the output if you just execute "mkb". "mkb" stands for Make Kombine Build
-
-```
-[parameters] They are optional and can be any of the following:
-
--ksdbg
-   Script will include debug information so script debugging will be possible.
--ksrb or -ksrebuild
-   Script will be rebuilt and cache will be skipped.
--ko:silent or -ko:s
-   Script output will be silent.
--ko:normal or -ko:n
-   Script output will be normal.
--ko:verbose or -ko:v
-   Script output will be verbose.
--ko:debug or -ko:d
-   Script output will be debug.
--kfile:filename
-   Indicates which script file we should execute (default kombine.csx)
-
-[action] Action to be executed. If not specified the default action is "khelp"
-		 The action is used to specify which function in the script should be called after evaluation but
-		 there are some reserved actions for the tool itself which cannot be used for the scripts:
-
- kversion: Shows tool version and exit.
- khelp: Show this help and exit.
- kconfig: Manages the tool configuration.
- kcache: Manages the tool cache.
-
-[action parameters]
-		 They are optional and belongs to the specified action. In case of scripts,they are passed to the
-		 executed function as parameters. For example: mkb kcache help
+```text
+mkb [parameters] [action] [action parameters]
 ```
 
-The parameters are intended for the tool itself. It regulates if the script will include debug information (required to debug the script if you need to took that way), control the output and indicate which script the tool should execute (the default is "kombine.csx" in your current folder). 
+The tool is case sensitive. ("mkb" stands for **M**ake **K**ombine **B**uild.) This is what you get if you just run `mkb` on its own:
 
-The script output is more intended to debug the script (without attach a debugger) since in verbose or debug it will drop in the console information lines about what is being processed (inner messages from the tool itself) so, for example, if you use a "Glob" and you want to check what the "Glob" detected, just place the output as verbose and you will see the log lines.
+```text
+Kombine Build Engine 1.4.20260611
+Copyrigth(C) Kollective Networks 2026. All rights reserved.
 
-The common is:
+mkb [parameters] [action] [action parameters]
 
-- Normal will output only your messages in your script.
-- Verbose will output like normal but also information from the functions you call.
-- Debug as verbose but also debug information from the tool itself.
+    [parameters] They are optional and can be any of the following:
 
-The debug output from Kombine is not intended to debug your script, is to debug Kombine itself. You are free to pass any argument to your script and set your output accordingly to fit your requirements.
+    -ksdbg
+       Script will include debug information so script debugging will be possible.
+    -ksrb or -ksrebuild
+       Script will be rebuilded even if it is cached.
+    -ko:silent or -ko:s
+       Script output will be silent.
+    -ko:normal or -ko:n
+       Script output will be normal.
+    -ko:verbose or -ko:v
+       Script output will be verbose.
+    -ko:debug or -ko:d
+       Script output will be debug.
+    -kfile:filename
+       Indicates which script file we should execute (default kombine.csx)
 
-Action is the function that will be executed in your script, check out on [Script Structure](#script-structure-and-execution)
-Anyway there are other actions that are reserved for the tool itself and they're builtin the tool like kconfig and kcache. The names with the "k" appended is just to avoid conflicts with your own actions so the action name "config" for example is free for you to be used.
-Check further about cache and config operations.
+    [action] Action to be executed. If not specified the default action is "khelp"
+             The action is used to specify which function in the script should be called after evaluation but
+             there are some reserved actions for the tool itself which cannot be used for the scripts:
 
-The default action is "khelp"
+     kversion: Shows tool version and exit.
+     khelp: Show this help and exit. Also available as "-h" or "--help" when used alone.
+     kconfig: Manages the tool configuration.
+     kcache: Manages the tool cache.
 
-Action parameters will be sent to the Action you execute it. Everything behind an action is consider as an action parameter.
+    [action parameters]
+             They are optional and belongs to the specified action. In case of scripts,they are passed to the
+             executed function as parameters. For example: mkb kcache help
+```
+
+The **parameters** configure the tool itself: whether the script is built with debug information (needed if you want to attach a debugger), how much output you see, and which script file to run (the default is `kombine.csx` in the current folder).
+
+The **output level** mostly helps you understand what a script is doing without attaching a debugger. In verbose or debug mode the tool prints extra lines about what it is processing. For example, if you use a `Glob` and want to see what it matched, run with verbose output and the matches will show up in the log. The levels are:
+
+- **Normal** prints only the messages your script emits.
+- **Verbose** prints your messages plus information from the API functions you call.
+- **Debug** prints everything verbose does, plus internal debug information from the tool.
+
+Note that the debug level is meant for debugging Kombine itself, not your script. You are free to pass your own arguments to your script and set the output level to whatever suits you.
+
+The **action** is the function in your script that gets called. See [Script structure and execution](#script-structure-and-execution) for how that works. A few action names are reserved for the tool itself (the built-ins like `kconfig` and `kcache`). The leading "k" is there to keep them out of your way, so an action named `config`, for example, is still free for you to use. If you don't specify an action, the default is `khelp`.
+
+The **action parameters** are passed straight through to the action you call. Everything after the action name is treated as an action parameter.
+
+### Exit codes
+
+Kombine follows standard Unix exit code conventions:
+
+- `0` — Success.
+- `1` — Generic failure (script aborts, internal errors, unimplemented built-ins).
+- `130` — User cancellation (Ctrl+C).
+- Other values — Explicit return values from action functions are preserved (for example, `return 7` exits with code `7`).
+
+Compatibility notes:
+
+- The built-in `kconfig` exits with `1` while it is unimplemented.
+- The built-in `kcache` exits with `1` for missing or unknown subcommands, and `0` on success.
+- Actions that don't return an `int` are treated as failures (exit code `1`).
+- Always test for failure with `!= 0`, not `== -1`.
 
 ## Script structure and execution
 
-The script has two different parts. The global and the actions.
-Let's put one example:
+A script has two parts: the **global** code and the **actions**. Here is a small example:
 
-```
+```csharp
 KValue mymessage = "hello world!";
 
 int build(string[] args){
-	Msg.Print("I'm building: "+mymessage);
-	return 0;
+    Msg.Print("I'm building: "+mymessage);
+    return 0;
 }
 int clean(string[] args){
-	Msg.Print("I'm cleaning: "+mymessage);
-	return 0;
+    Msg.Print("I'm cleaning: "+mymessage);
+    return 0;
 }
 ```
 
-The first part is the global code. It will be executed always. You can place there whatever you want. You can define values, lists or call functions.
-For example, if you add on the global code a line with Http.DownloadFile("youruri","pathtosave"); the file will be downloaded in all the script executions.
+The first part is the **global code**. It always runs, no matter which action you call. You can put anything there: define values and lists, or call functions. For example, if your global code contains `Http.DownloadFile("youruri", "pathtosave");`, that file gets downloaded on every run of the script.
 
-The second part (the functions) are the actions. If you call this script as "mkb build" the global code will be executed but next, the function "build" will be executed. Function will receive the action parameters in the string array and the return code will indicate the exiting code from the script execution.
+The second part is the set of **actions** (the functions). If you run the script with `mkb build`, the global code runs first and then the `build` function runs. An action receives the action parameters as a string array, and its return value becomes the script's exit code.
 
-Quite easy right? We tried to fetch the simplicity from make but making it cross platform out of the box.
-From an action function being called, you can do whatever you want as well (create instances, call other functions, whatever, remember, is C#).
+Simple, right? We borrowed the simplicity of `make` while making it cross-platform out of the box. Inside an action you can do whatever you like (create instances, call other functions, anything) because it is just C#.
 
-But wait, this should be slow, right?
-Well, if fact, it is, for the first execution of the script. Invoke Roslyn and compile a piece of C# code (with maybe other includes) is not a fast task. 
-Oh, okey, it is not the end of the world, when we said "is not fast" is because it could take a pair of seconds, it will not consume you half life. 
+"But surely this is slow?" It is, for the **first** run of a script. Invoking Roslyn to compile a piece of C# (possibly with other includes) is not instant. That said, it's not the end of the world: "not fast" means a couple of seconds, not half your afternoon.
 
-Anyway, that's why we added a build cache which is transparent to you. If its the first time the script is executed or if you modify the script, it will be built again and place on the cache (which is on your home folder but in the space reserved for applications, for example, in windows /users/"username"/appdata/roaming/kombine). In the following executions the script will run as an application, without being built or anything else, so, it's fast.
+To avoid paying that cost every time, Kombine keeps a transparent build cache. The first time a script runs, or whenever you change it, it gets compiled and stored in the cache (in your home folder, under the per-application area, for example `C:\Users\<username>\AppData\Roaming\kombine` on Windows). On later runs the script runs like a normal application, with no compilation, so it's fast.
 
-If you want to rebuild your script then you may use a parameter or an action.
+When you do want to force a rebuild, you have two options:
 
-If you invoke as action "mkb kcache clear" everything on the build cache will be deleted, so, the next script executions will rebuild the scripts again.
-If you invoke as argument "mkb -ksrb youraction yourargs" the cache for the current script will be ignored, it will be rebuild again.
+- Run `mkb kcache clear` to delete the entire build cache, so every script recompiles on its next run.
+- Run `mkb -ksrb <action> <args>` to ignore the cache for the current script and rebuild just that one.
 
-The cache is intended to have its own garbage collection system, so, in any Kombine execution files no longer needed will be dropped from the cache itself. Anyway this is not implemented yet.
+The cache is designed to garbage-collect itself, dropping files that are no longer needed on any Kombine run. That part is not implemented yet.
 
-We tried also to make it the simpler as posible, for example, to define a list:
-```
+We also tried to keep the built-in types as simple as possible. For example, to build a list:
+
+```csharp
 KList   src = "my item1";
-		src += "my item2"
+        src += "my item2";
 ```
-or
-```
+
+or:
+
+```csharp
 KList   src = new() { "item1", "item2" };
 ```
-And you can remove as well like:
-```
+
+And to remove an item:
+
+```csharp
 KList   src = new() { "item1", "item2" };
-		src -= "item2";
+        src -= "item2";
 ```
-This is particular useful for example when you deal with command line parameters and you need to add/remove them.
 
-The KValue and KList types has nicer conversions and useful methods (For example, KList has a "Flatten" method which actually converts the list into a single KValue, very nice to pass the list of parameters to a tool).
+This is handy when you are assembling command-line arguments and need to add or remove them. `KValue` and `KList` also have convenient conversions and helper methods (for example, `KList.Flatten` turns the list into a single `KValue`, which is great for passing a full argument list to a tool).
 
-Don't forget to check out for the [API details](doc/api.md) or the [Examples](#examples) to learn more about what is available.
+Don't forget to check the [API reference](doc/api.md) and the [Examples](#examples) to learn what else is available.
 
 ### Enable intellisense in your editor
 
-If your environment allows some form of "intellisense" (like Visual Studio Code) the most standard way is the following, but think that this depends on your environment. Maybe you need to place the reference assembly in an specific location or others. Refer to your environment documentation for intellisense options.
+Kombine scripts are plain C#. When `mkb` runs a script it already knows every Kombine type (`Msg`, `Folders`, `KValue`, `Tool`, and so on) because those types live inside `mkb` itself. Your editor does not: it only sees the script text. So a script builds and runs fine on its own, but your editor can't offer autocomplete or type checking for the Kombine API unless you hand it a description of that API.
 
-The regular way is just add in your script a #r "mkb.dll" directive to the reference assembly of the tool. Grab the reference assembly from [here](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.ref.zip) and put it alongside your script. Optionally add in your script the usings required for the intellisense to work.
+That description is the **reference assembly**, a file named `mkb.dll`. It holds the public API surface (the types and their signatures) with no executable code inside, just enough for your editor's C# engine (OmniSharp or the C# Dev Kit in VS Code, Rider, Visual Studio) to understand what you can call.
 
-The usings with the reference for the intellisense could be something like:
+To switch intellisense on, add this to the top of your script:
 
-```
+```csharp
 #r "mkb.dll"
 using Kltv.Kombine.Api;
 using Kltv.Kombine.Types;
@@ -199,239 +238,259 @@ using static Kltv.Kombine.Api.Statics;
 using static Kltv.Kombine.Api.Tool;
 ```
 
+- `#r "mkb.dll"` tells your editor where to find the API description.
+- The `using` lines bring the common Kombine namespaces into scope so the names resolve.
+
+The `mkb.dll` you need ships next to the executable inside the single-file packages. Copy it next to your script, or point `#r` at wherever you keep it. Your editor resolves the path relative to the script file, so a relative path such as `#r "../build/mkb.dll"` is fine.
+
 ![Intellisense](doc/assets/intellisense.png "Intellisense")
 
-Remember, this is not required to execute the script. Even more, kombine will ignore that code. It is only to enable the intellisense to help you write the scripts.
+**This is editor-only.** When `mkb` runs your script it ignores the `#r` line completely: it resolves the API from the running tool in memory, whether or not `mkb.dll` exists on disk. You can delete the `#r` line entirely and the script still builds and runs; you just lose autocomplete while editing. In other words, the path you put in `#r` never affects your build, it only tells your editor where the API description lives.
 
-There are no more rules. Rest is up to you. No constrainst, anything.
-Check the [API provided by the tool](doc/api.md) to get more information about builtin functionality.
-
-Download the reference assembly to be used for intellisense [here](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.ref.zip)
+Beyond that there are no rules. The rest is up to you. Check the [API reference](doc/api.md) for the full list of built-in functionality.
 
 ### Debugging your scripts
 
-It is possible to debug your scripts. With just for example, using VSCode and the dotnet debugger. You only need to set your launch.json to execute the tool with the script with the appropiate parameters, set a breakpoint in your script code and that's all. Of course, never forget to pass the -ksdbg flag in this case to generate debug information on the script :)
+You can debug your scripts, for example with VS Code and the .NET debugger. Point your `launch.json` at the tool, pass it your script and the right parameters, set a breakpoint in your script, and you're set. Just remember to pass the `-ksdbg` flag so the script is built with debug information.
 
-One example of launch.json for Visual Studio Code could be this one:
-```
+Here is an example `launch.json` for VS Code:
+
+```json
 {
-	// Use IntelliSense to learn about possible attributes.
-	// Hover to view descriptions of existing attributes.
-	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"name": "C#: Debug script",
-			"type": "coreclr",
-			"request": "launch",
-			"windows": {
-				"program": "mkb.exe"
-			},
-			"linux":{
-				"program": "mkb.out"
-			},
-			"osx": {
-				"program": "mkb.out"
-			},
-			"args": [ "-ksdbg","-ko:d", "youractionhere","yourparameters" ],
-			"cwd": "folder for your script",
-			"console": "integratedTerminal",
-		}
-	]
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C#: Debug script",
+            "type": "coreclr",
+            "request": "launch",
+            "windows": {
+                "program": "mkb.exe"
+            },
+            "linux":{
+                "program": "mkb.out"
+            },
+            "osx": {
+                "program": "mkb.out"
+            },
+            "args": [ "-ksdbg","-ko:d", "youractionhere","yourparameters" ],
+            "cwd": "folder for your script",
+            "console": "integratedTerminal",
+        }
+    ]
 }
 ```
 
-As a side note: In some cases the dotnet debugger [fails to execute](https://github.com/dotnet/runtime/issues/42927) and attach a single file dotnet binary. If that's the case, and you want to debug your scripts, grab a copy of the self contained tool but not in single file and use it. 
-The dotnet failure is reported for [different frameworks](https://github.com/dotnet/runtime/issues/84428) was suposed to be [fixed for dotnet 8](https://github.com/dotnet/runtime/pull/84965) but in fact, it is not.
+One caveat: in some cases the .NET debugger [fails to launch and attach](https://github.com/dotnet/runtime/issues/42927) to a single-file .NET binary. If you hit that and you want to debug your scripts, use a self-contained build that is **not** single-file instead. This .NET issue has been reported across [several frameworks](https://github.com/dotnet/runtime/issues/84428) and was [supposedly fixed for .NET 8](https://github.com/dotnet/runtime/pull/84965), but in practice it still happens.
 
-The self contained but not single file can be downloaded from here: 
+The self-contained, non-single-file builds are here:
 
-- [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.win.zip)
-- [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.lnx.tar.gz)
-- [Mac OSX](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.osx.tar.gz)
+- [Windows](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.win.x64.zip)
+- [Linux](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.lnx.x64.tar.gz)
+- [macOS (Apple Silicon)](https://github.com/kollective-networks/kltv.kombine/releases/latest/download/kombine.debug.osx.arm64.tar.gz)
 
 ## Executing child scripts and sharing values between your scripts
 
-Kombine has a function called "Kombine" with the following prototype:
+Kombine has a function called `Kombine` with this signature:
 
-```int Kombine(string script,string action, string[]? args = null,bool exitonerror = true, bool changedir = true,bool search=true)```
+```csharp
+int Kombine(string script, string action, string[]? args = null, bool exitonerror = true, bool changedir = true, bool search = true)
+```
 
-This function is used to invoke another kombine script. The script string is the filename and may contain absolute or relative paths.
-Also you need to specify the action and optionally arguments to the action. The "changedir" parameter is to instruct if we want to switch the current working directory to the directory where the script is. You can specify if automatically abort script execution if the child script returned error (anything non zero)
+You use it to invoke another Kombine script. The `script` argument is the filename and may include an absolute or relative path. You also pass the action to run and, optionally, arguments for it. The `changedir` parameter controls whether the current working directory is switched to the child script's folder. With `exitonerror` you can have the parent abort automatically if the child returns a non-zero code.
 
-The "search" parameter is used to indicate if we want automatic search for the Kombine scripts. The order is the same as when we include another script by including (see [Extending Kombine](#extending-kombine)).
+The `search` parameter controls whether Kombine automatically searches for the child script. The lookup order is the same one used when you include another script (see [Extending Kombine](#extending-kombine)):
 
-The order is the following:
+1. The current working directory.
+2. The current script's directory.
+3. Forward paths.
+4. Backward paths.
+5. The Kombine tool directory.
 
-1. The current working directory
-2. The current script directory
-3. Forward paths
-4. Backward paths
-5. Kombine tool directory 
+The function returns the child script's exit code. Simple enough. See [Exit codes](#exit-codes) for what the return value means.
 
-The function will return the exitcode as result of the child script execution. Quite simple right?
-
-But maybe you need to share information between your parent and your child scripts (maybe some global definitions, paths or whatever).
-There are multiple methods:
+Sometimes you also need to share information between a parent and its child scripts (global definitions, paths, whatever). There are several ways to do that.
 
 ### Using Import/Export
 
-The first method is using the KValue methods "Import" and "Export". 
-Export will take the content of the variable and set it on the internal environment table. It takes the name as it should be exported.
-```
+The first method uses the `KValue` methods `Import` and `Export`. `Export` takes the variable's content and stores it in the internal environment table under the name you give it:
+
+```csharp
 KValue myvar = "value";
 myvar.Export("VAR");
 ```
-The content of "myvar", that is "value" will be available for:
 
-- Child scripts if they use the Import method.
-- Child processes launched by Exec or Tool if they read that environment variable called "VAR".
+The content of `myvar` ("value") is then available to:
 
-It is possible then to setup environment variables for all the running child processes.
+- Child scripts, if they use the `Import` method.
+- Child processes launched by `Exec` or `Tool`, if they read the environment variable `VAR`.
 
-Import will do the oposite but it is a bit different.
-```
+This lets you set up environment variables for all the child processes you launch.
+
+`Import` does the opposite, with a small twist:
+
+```csharp
 KValue myvar = KValue.Import("VAR","othervalue");
 ```
-In this case, myvar will be filled out with the value of the environment variable "VAR" or with "othervalue" as default value if the environment variable does not exists.This is specially useful if you want to have scripts that may run standalone but accept parameters from parent scripts to modify the behavior.
+
+Here `myvar` is filled with the value of the environment variable `VAR`, or with `"othervalue"` as a default if that variable doesn't exist. This is especially useful when you want scripts that can run standalone but still accept overrides from a parent script.
 
 ### Using Shared API
 
-Sometimes share a value is not enough and you want to share a more complex thing. 
-Think for example in one real life case, the "compile_commands.json" for the clang intellisense. 
-Ideally you want your parent/master script to define where the compile_commands should be stored and next execute the diferent parts of your build, but each one adding / modifying the appropriate values in that specific "compile_commands".
+Sometimes sharing a plain value isn't enough and you want to share something more complex. Consider a real case: the `compile_commands.json` file used for clang intellisense. Ideally your parent (master) script decides where that file lives, then runs the different parts of the build, each adding or modifying entries in that one file.
 
-For that purpose you have Share.Set and Share.Get to store and retrieve objects. Following the past case you can create a class to manage the file and pass the instance to the rest of the scripts. This approach is taken in the provided as example extension "clang.csx" class to share the compile commands with all the descendant scripts.
+For that you have `Share.Set` and `Share.Get` to store and retrieve objects. Following the example above, you can write a class that manages the file and pass the instance to the rest of the scripts. The example extension `clang.csx` does exactly this to share the compile commands with all of its descendant scripts.
 
-Share.Set takes name for the shared resource and object as parameter and Share.Get takes the name of the shared resource to be retrieved.
-This is how is used in the clang.csx to manage that file but can be applied to whatever you want. 
+`Share.Set` takes a name and an object; `Share.Get` takes the name and returns the object. Here is how `clang.csx` uses it to manage that file, though you can apply the same pattern to anything:
+
+```csharp
+if (Share.Get("compile_commands") != null) {
+    compdb = Share.Get("compile_commands") as JsonFile;
+    return true;
+} else {
+    // Create it if it doesn't exist
+    compdb = new JsonFile(file);
+    if (compdb.Doc == null) {
+        // It's a new one, just create the array.
+        compdb.Doc = new JsonArray();
+        if (compdb.Save() == true){
+            Share.Set("compile_commands",compdb);
+            return true;
+        }
+        Msg.PrintWarning("Failed to create a new compile commands file: "+file,Msg.LogLevels.Verbose);
+        return false;
+    }
+    Share.Set("compile_commands",compdb);
+    return true;
+}
 ```
-		if (Share.Get("compile_commands") != null) {
-			compdb = Share.Get("compile_commands") as JsonFile;
-			return true;
-		}else{
-			// Create it if not exists
-			compdb = new JsonFile(file);
-			if (compdb.Doc == null) {
-				// Is a new one, just create the array.
-				compdb.Doc = new JsonArray();
-				if (compdb.Save() == true){
-					Share.Set("compile_commands",compdb);
-					return true;
-				}
-				Msg.PrintWarning("Failed to create a new compile commands file: "+file,Msg.LogLevels.Verbose);
-				return false;
-			}
-			Share.Set("compile_commands",compdb);
-			return true;
-		}
-```
-Remember, Shared API exports to child scripts but not for parent ones or brothers exactly the same as Import/Export.
 
-As a side note. Since you may share a complex object that maybe is defined as a class or struct into your script, that definition will be only in the scope of your script, so, you share the object but not the definition. Anyway, you can add / include the same definition in your child scripts and cast from the retrieved object to definition you want using ``static T? Cast<T>(object? myobj)``. That method is used as well in the provided extension example "clang.csx" to share clang default parameters between script instances.
+Remember, just like Import/Export, the Shared API flows down to child scripts only, not to parents or siblings.
 
-```
+One more note: a complex object is often defined as a class or struct inside your script, and that definition only exists in your script's scope. So you share the object, but not its type definition. To use it in a child script, include the same definition there and cast the retrieved object with `static T? Cast<T>(object? myobj)`. The example extension `clang.csx` uses this to share default clang options between script instances:
+
+```csharp
 object? obj = Share.Get("ClangOptions");
-   if (obj != null) {
-	 ClangOptions? opt = Cast<ClangOptions>(obj);
+if (obj != null) {
+    ClangOptions? opt = Cast<ClangOptions>(obj);
 ```
 
 ### Using Registry API
 
-Sometimes you need to propagate in a different way. Until now we saw the we can share things with the scripts executed as child and tool environment but sometimes another thing is required. Think on the following real case:
+Sometimes you need to propagate information differently. So far we've shared things with child scripts and the tool environment, but consider this real case:
 
-You have a project with 20 different libraries that builds independly, maybe 5 libraries takes other 5 ones as input so you need to add the include directories, the library folders, etc. Now 2 different libraries changed the path because you reorganize, then you need to go through all of your scripts fixing the paths where the output artifacts will be. Quite common, right?
+You have a project with 20 libraries that build independently. Five of them consume another five as inputs, so you need their include directories, library folders, and so on. Now two of those libraries change paths because you reorganized the tree, so you have to walk through all your scripts fixing the output paths. Common, right?
 
-Registry is to help for that. Registry can be used as a worldwide dictionary for all the scripts, so, if a library is built, it can "register" and make it available the routes for the rest of the components that may want to use it. So, if you change your outputs or whatever and the rest of the scripts just read from the registry then you don't need to touch anywhere else, only on the library affected.
+The registry helps with exactly that. It is a global dictionary shared by all scripts: when a library is built it can **register** the paths it produces and make them available to everything else that needs them. So if you change your outputs, only the affected library's script needs touching; everything else just reads from the registry.
 
-For example, in your build step, in your library, you can put something like:
-```Share.Register("mylibrary","includes",RealPath("includes/"));```
-	
-And, in another script where you're building something that requires the library you can fetch the value
-```KValue regvalue = Share.Registry("mylibrary","includes");```
+For example, in the build step of your library you can write:
 
-It could be used as well to register dependencies that maybe are allocated by platform in the first steps of the build. This way you can organize your build in a way that you don't need to touch a ton of scripts everytime a dependency is modified, just modify the register and that's all.
+```csharp
+Share.Register("mylibrary","includes",RealPath("includes/"));
+```
 
+And in another script that depends on the library you read the value back:
+
+```csharp
+KValue regvalue = Share.Registry("mylibrary","includes");
+```
+
+You can also use it to register dependencies that are resolved per platform in the early stages of a build. This lets you organize the build so you don't have to touch dozens of scripts every time a dependency changes, just update the registry entry and you're done.
 
 ## The most simple example, execute a tool and fetch the results
 
-We have a good shortcut to execute anything:
-```int Result = Exec("/path/toMyTool/mytool.exe","arg1 arg2",true);```
-Remember that you can pass KValue/KList or you can do something like:
+There is a handy shortcut to run anything:
 
-On of the prototypes is: ``int Exec(string command,string? args = null,bool showoutput=false)``
-
+```csharp
+int Result = Exec("/path/toMyTool/mytool.exe","arg1 arg2",true);
 ```
+
+You can pass a `KValue` or `KList` as well. One of the `Exec` overloads is:
+
+```csharp
+int Exec(string command, string? args = null, bool showoutput = false)
+```
+
+So you can write:
+
+```csharp
 KValue toolname = "mytool.exe";
 if (Host.IsMacOS())
-	toolname = "mytool.out";
+    toolname = "mytool.out";
 KList args = new() { "arg1","arg2" };
 int Result = Exec(toolname,args);
 ```
 
-But that maybe is not enough since we just fetch the exiting code. Is nice for simple command but not so powerful.
-If you need to deal better, then, you need to use the tool class:
+That only gives you back the exit code, which is fine for simple commands but not very powerful. When you need more, use the `Tool` class:
 
-```
+```csharp
 Tool mytool = new Tool("mytool");
 ToolResult res = mytool.CommandSync("mytool.exe","-j -k -l");
 ```
+
 ![ToolResult](doc/assets/toolresult.png)
 
-In ToolResult you will have whatever you need, including stderr / stdout and so on.
-Of course, we launched the command "sync" that is, execute and block till finishes, but you can use Tool class as well to insert commands into one queue and then launch them (imposing limits about the number of concurrent executions we allow) and other properties. The launched tool will receive a copy of the current environment variables set. So, if you add it something, it will receive it.
+`ToolResult` gives you everything you need, including stderr and stdout. Here we ran the command synchronously (it blocks until the tool finishes), but the `Tool` class can also queue commands and launch them later, with a cap on how many run concurrently, plus other options. Each launched tool receives a copy of the current environment variables, so anything you add is passed along.
 
-Check out the [API](doc/api.md) for more details about console output / shell execution and more.
+Check the [API reference](doc/api.md) for more on console output, shell execution, and more.
 
 ## Extending Kombine
 
-Kombine has a [builtin API](doc/api.md) to deal with the common cases but you may want to extend it in a reusable way. One of the common use cases is to encapsulate a new tool execution. Maybe because you want to simplify the process to construct the command line, or add some arguments by default,etc.
+Kombine has a [built-in API](doc/api.md) for the common cases, but you'll often want to extend it in a reusable way. A typical case is wrapping a tool's invocation, maybe to simplify building its command line, or to add some default arguments.
 
-Being C# you can, of course, create a class to encapsulate any kind of functionality. Okey, that's nice, but to keep your code organized and to reuse those extensions between projects we overloaded the load directive to allow you doing nicer things.
+Being C#, you can of course write a class to encapsulate any functionality. That's nice on its own, but to keep your code organized and reusable across projects we extended the `#load` directive to do something better.
 
-In C# there is one directive #load "whatever" which allow you to include another script in your current one. #Load and #r directives should be placed before any regular statements (comments doesn't count here). So, at the beggining of your script you can place #load "mytool.csx".
+In C# there is a `#load "whatever"` directive that includes another script into the current one. `#load` and `#r` directives must appear before any regular statements (comments don't count). So at the top of your script you can write `#load "mytool.csx"`.
 
-Fine, but how about work with this? In a regular C# scripting, the load directive will allow you to put relative or absolute paths in the include, nothing else, but that forces you to maintain the scripts relationship in your file system.
+In regular C# scripting, `#load` only accepts a relative or absolute path, which forces you to keep your scripts' relationships pinned to the filesystem. Kombine's `#load` works a bit differently:
 
-In our case, #load, works a bit different.
+- If the path is absolute, it is used as-is. Nothing else.
+- If the path is a URL, the file is fetched from that URL, stored in the cache, and used.
+- If the path is relative, Kombine searches several folders in this order:
+  - The current working directory.
+  - The script's directory.
+  - Forward paths (from the current script's folder, going forward).
+  - Backward paths (from the current script's folder up to the drive root).
+  - The tool directory (where the executable lives).
 
-- If the path you provided is an absolute one, it will use it. Nothing else.
-- If the path you provided is an URI, it will fetch the file from that URL, store it on cache and use it.
-- If the path you provided is relative, then, kombine will look in several folders following this order
-  - CurrentDirectory (the current working folder)
-  - ScriptDirectory (where the current is script is located)
-  - Forwardtrace directories (from the current script folder one and onwards)
-  - Backtrace directories (from the current script folder one to the drive root)
-  - Tool directory (where the tool is located)
-
-Going this way you can keep a folder in your structure with your scripts and load them from any point, just doing #load "myscriptfolder/myscript.csx" no matter where you are, it will backtrace and check to find your folder. You can keep your own repository of scripts as well and invoke them by http. Nice, right?
+This way you can keep a folder of scripts in your tree and load them from anywhere with `#load "myscriptfolder/myscript.csx"`, no matter where you are; Kombine will walk the tree and find your folder. You can also keep your own repository of scripts and pull them in over HTTP. Nice, right?
 
 ## Examples
 
-In the example folder you can find several examples to check it out how this thing works.
-There is a kombine.csx in the example folder which can execute all the given examples at once.
+The `examples` folder has several examples that show how all of this works. There is a `kombine.csx` in that folder that can run every example at once.
 
-The list of examples and what it test/demonstrates
-- simple: Just minimal and print some strings
-- base: Initial functions / check version & co
-- types: Operations with KValue & KList
-- child: Operations related to execute child scripts and Import/Export values and other sharing's.
-- folders: Operations related to deal with files, folders and compression.
-- clang: Example of building with clang using the provided extension (static lib, dynlib and binary)
-- sdl2: Example of building sdl2 using git to clone it from github.
-- network: Example fetching files from HTTP sources
-- msys2: Example about fetching packages from Msys2 repositories
+The examples and what each one demonstrates:
 
-Since the spirit of Kombine is reuse as possible, some scripts to extend Kombine are provided as well in the "extensions" folder.
+- **simple**: The bare minimum, just prints a few strings.
+- **base**: Initial functions, version checks, and so on.
+- **types**: Operations with `KValue` and `KList`.
+- **child**: Running child scripts, Import/Export, and other sharing.
+- **folders**: Working with files, folders, and compression.
+- **clang**: Building with clang using the provided extension (static library, dynamic library, and binary).
+- **sdl2**: Building SDL2, cloning it from GitHub with git.
+- **network**: Fetching files from HTTP sources.
+- **msys2**: Fetching packages from MSYS2 repositories.
 
-- clang.csx: Defines one class which encapsulates clang operations (Compile,Link,Librarian) 
-- git.csx: Defines one class which encapsulates git operations (clone, checkout, fetch)
-- clang.doc.csx: Defines one class which encapsulates clang-doc and implements conversion to markdown files
+Because Kombine is all about reuse, some ready-made extension scripts live in the `extensions` folder:
 
-They are not superb and even not completed with all the possibilities but ready enough to do clones and builds
+- **clang.csx**: A class wrapping clang operations (Compile, Link, Librarian).
+- **git.csx**: A class wrapping git operations (clone, checkout, fetch).
+- **clang.doc.csx**: A class wrapping clang-doc, with conversion to Markdown files.
 
-If you create some class extension and you think it could be useful for others, please, share it. 
-Everything is welcome.
+They aren't exhaustive, but they're complete enough to clone and build real projects. If you write an extension class you think others could use, please share it. Everything is welcome.
+
+## Creating a Release
+
+Releases are triggered by pushing a Git tag that matches the pattern `v*` (for example, `v1.4.20260520`). GitHub Actions then builds for every platform and publishes a release with all the artifacts:
+
+```bash
+git tag v1.4.20260520
+git push origin v1.4.20260520
+```
+
+The CI workflow runs the tests, cross-compiles for Windows, Linux and macOS, packages both the debug and release builds, and publishes them to GitHub Releases. See [doc/building.md](doc/building.md) for the detailed instructions.
 
 ## License
 

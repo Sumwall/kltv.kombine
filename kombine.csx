@@ -28,7 +28,8 @@ int help(string[] args){
 	Msg.Print("Usage: mkb publish (builds and create packages)");
 	Msg.Print("       mkb release (push the release to github)");
 	Msg.Print("       mkb build (just build for the current system in debug mode)");
-	Msg.Print("       mkb test (runs the unit tests)");
+	Msg.Print("       mkb test (runs the full unit tests)");
+	Msg.Print("       mkb smoke (runs the light engine smoke tests)");
 	Msg.Print("");
 	return 0;
 }
@@ -38,6 +39,12 @@ int test(string[] args){
 	Kombine("examples/kombine.csx","test",args);
 	Kombine("examples/kombine.csx", "extensions", args);
 	Kombine("examples/kombine.csx", "extras", args);
+	return 0;
+}
+
+int smoke(string[] args){
+	Msg.Print("Running smoke tests (engine core)");
+	Kombine("examples/kombine.csx","smoke",args);
 	return 0;
 }
 
@@ -74,8 +81,6 @@ int publish(string[] args){
 		return ExitCode;
 	Msg.Print("Creating output folder.");
 	Folders.Create("../out/pkg");
-	Msg.Print("Compress the reference assembly");
-	Compress.Zip.CompressFile("../out/bin/win-x64/release/ref/mkb.dll","../out/pkg/kombine.ref.zip");
 	Msg.Print("[Windows] Compress the unpacked tool");
 	Compress.Zip.CompressFolder("../out/bin/win-x64/release/","../out/pkg/kombine.debug.win.zip",true,false);
 	// Generate the single file package
@@ -167,7 +172,6 @@ int release(string[] args) {
 	// If the release was created successfully, upload the assets
 	//
 	string[] assets = new string[] {
-		"out/pkg/kombine.ref.zip",
 		"out/pkg/kombine.debug.win.zip",
 		"out/pkg/kombine.win.zip",
 		"out/pkg/kombine.debug.lnx.tar.gz",

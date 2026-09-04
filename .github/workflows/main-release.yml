@@ -1,0 +1,135 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Smoke test (Linux x64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build mkb (Debug)
+        run: dotnet build src/kombine.csproj -c Debug -r linux-x64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Run smoke test suite
+        run: ./out/bin/linux-x64/debug/mkb -kfile:kombine.csx smoke
+
+  package:
+    name: Package and Release
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Extract build number from tag
+        id: version
+        run: |
+          TAG="${{ github.ref_name }}"
+          BUILD=$(echo "$TAG" | sed 's/^v[0-9]*\.[0-9]*\.//')
+          echo "build=$BUILD" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Inject build number into version.cs
+        run: |
+          sed -i 's/\[BUILD\]/${{ steps.version.outputs.build }}/g' src/version.cs
+
+      - name: Create package directory
+        run: mkdir -p out/pkg
+
+      # Windows x64
+      - name: Build Windows x64 (Release)
+        run: dotnet build src/kombine.csproj -c Release -r win-x64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Package Windows x64 debug
+        run: (cd out/bin/win-x64/release && zip -r ../../../../out/pkg/kombine.debug.win.x64.zip . -x "ref/*" "*.pdb")
+
+      - name: Publish Windows x64 (single-file)
+        run: dotnet publish src/kombine.csproj -c Release -r win-x64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Package Windows x64 release
+        run: zip -j out/pkg/kombine.win.x64.zip out/pub/win-x64/release/mkb.exe out/bin/win-x64/release/ref/mkb.dll
+
+      # Linux x64
+      - name: Build Linux x64 (Release)
+        run: dotnet build src/kombine.csproj -c Release -r linux-x64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Package Linux x64 debug
+        run: tar -czf out/pkg/kombine.debug.lnx.x64.tar.gz -C out/bin/linux-x64/release .
+
+      - name: Publish Linux x64 (single-file)
+        run: dotnet publish src/kombine.csproj -c Release -r linux-x64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Package Linux x64 release
+        run: |
+          cp out/bin/linux-x64/release/ref/mkb.dll out/pub/linux-x64/release/mkb.dll
+          tar -czf out/pkg/kombine.lnx.x64.tar.gz -C out/pub/linux-x64/release mkb mkb.dll
+
+      # macOS ARM64
+      - name: Build macOS ARM64 (Release)
+        run: dotnet build src/kombine.csproj -c Release -r osx-arm64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Package macOS ARM64 debug
+        run: tar -czf out/pkg/kombine.debug.osx.arm64.tar.gz -C out/bin/osx-arm64/release .
+
+      - name: Publish macOS ARM64 (single-file)
+        run: dotnet publish src/kombine.csproj -c Release -r osx-arm64 -p:Platform=AnyCPU --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false -p:GenerateDocumentationFile=false -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Package macOS ARM64 release
+        run: |
+          cp out/bin/osx-arm64/release/ref/mkb.dll out/pub/osx-arm64/release/mkb.dll
+          tar -czf out/pkg/kombine.osx.arm64.tar.gz -C out/pub/osx-arm64/release mkb mkb.dll
+
+      - name: Extract changelog for release
+        id: changelog
+        run: |
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          CHANGELOG=$(sed -n "/## \[$VERSION\]/,/## \[/p" changelog.md | sed '$d')
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.body }}
+          files: |
+            out/pkg/kombine.win.x64.zip
+            out/pkg/kombine.debug.win.x64.zip
+            out/pkg/kombine.lnx.x64.tar.gz
+            out/pkg/kombine.debug.lnx.x64.tar.gz
+            out/pkg/kombine.osx.arm64.tar.gz
+            out/pkg/kombine.debug.osx.arm64.tar.gz
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

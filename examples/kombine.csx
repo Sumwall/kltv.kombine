@@ -59,6 +59,48 @@ int test(string[] args){
 }
 
 /// <summary>
+/// Execute a light smoke subset: the fast, self-contained engine examples only.
+/// No external toolchains (clang, sdl2, msys2) and no network, so it stays quick and
+/// deterministic in CI while still covering the core engine and #load resolution.
+/// </summary>
+/// <param name="args"></param>
+/// <returns></returns>
+int smoke(string[] args){
+	Msg.Print("");
+	Msg.Print("Smoke testing scripts (engine core)");
+	Msg.Print("");
+	Msg.Print("----------------------------------------------------------");
+	Msg.Print("");
+	Msg.Print("Testing: Base functions");
+	Kombine("00.base/mkb.version.csx","test",args);
+	Kombine("00.base/mkb.admin.csx","test",args);
+	Kombine("00.base/mkb.exitcodes.csx","test",args);
+	Msg.Print("----------------------------------------------------------");
+	Msg.Print("");
+	Msg.Print("Testing: Simple script (two actions)");
+	Kombine("01.simple/mkb.simple.csx","build",args);
+	Kombine("01.simple/mkb.simple.csx","clean",args);
+	Msg.Print("----------------------------------------------------------");
+	Msg.Print("");
+	Msg.Print("Testing: Built in types");
+	Kombine("02.types/mkb.types.csx","test",args);
+	Msg.Print("----------------------------------------------------------");
+	Msg.Print("");
+	Msg.Print("Testing: Child scripts");
+	Kombine("03.child/mkb.child.csx","test",args);
+	Msg.Print("----------------------------------------------------------");
+	Msg.Print("");
+	Msg.Print("Testing: #load resolution");
+	Kombine("08.loadresolution/mkb.loadresolution.csx","test",args);
+	Msg.Print("----------------------------------------------------------");
+	Msg.Print("");
+	Msg.Print("Testing: Files & folders & compression");
+	Kombine("04.folders/mkb.folders.csx","test",args);
+	Msg.Print("----------------------------------------------------------");
+	return 0;
+}
+
+/// <summary>
 /// Execute the extension scripts tests
 /// </summary>
 /// <param name="args"></param>

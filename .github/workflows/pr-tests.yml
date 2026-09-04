@@ -1,0 +1,39 @@
+name: PR Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-tests-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Smoke test (Windows x64)
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build mkb (Debug)
+        run: dotnet build src/kombine.csproj -c Debug -r win-x64 -p:Platform=AnyCPU -p:RestoreSources=https://api.nuget.org/v3/index.json
+
+      - name: Run smoke test suite
+        run: .\out\bin\win-x64\debug\mkb.exe -kfile:kombine.csx smoke

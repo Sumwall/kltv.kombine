@@ -17,6 +17,11 @@
 - [Misc] Launch-failure diagnostics now name the command, and the "could not launch" message prints at normal level
 - [Misc] Warning-clean build: dropped the framework-provided System.Text.Json package reference and fixed an inexact stream read (CA2022) in the file-content comparison
 - [Misc] Examples: added `00.base/mkb.exitcodes.csx` (exit-code contract) and `08.loadresolution` (two repos sharing the same helper layout, one embedded inside the other's dependency folder, asserting each script binds its own repo's helpers); the SDL2 example disables `-msse3` on ARM64 and filters sources per platform; the MSYS2 extras test is skipped on non-Windows hosts
+- [Feature] Release automation on GitHub Actions: a pull-request check runs the smoke suite, and pushing a `v<major>.<minor>.<build>` tag cross-builds win-x64, linux-x64 and osx-arm64, injects the build number from the tag into `version.cs`, and publishes a GitHub release whose notes are extracted from the matching `## [<version>]` section of this changelog
+- [Feature] New `mkb smoke` action runs only the fast engine-core examples (no clang, sdl2, msys2 or network) for quick, deterministic CI checks; `mkb test` keeps running the full suite
+- [Updated] The reference assembly (`mkb.dll`) now ships next to the executable inside the release packages; the standalone `kombine.ref.zip` artifact has been retired and the packages carry the platform in their name (`kombine.win.x64.zip`, `kombine.lnx.x64.tar.gz`, `kombine.osx.arm64.tar.gz`, plus the `debug` variants)
+- [Misc] Helper scripts under `scripts/` to lint the workflows with actionlint and to dry-run the release workflow locally with act
+- [Misc] Documentation: readme reorganized (table of contents, download links per platform, exit codes, the reference assembly explained, release process); the building guide covers macOS setup, version numbering and the tag-driven release
 
 ## [1.4.24072788]
 - [Feature] Added methods in Http API to support uploads and credentials
